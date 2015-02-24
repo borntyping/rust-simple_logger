@@ -1,6 +1,8 @@
 # simple_logger [![](https://img.shields.io/github/tag/borntyping/rust-simple_logger.svg)](https://github.com/borntyping/rust-simple_logger/tags) [![](https://img.shields.io/travis/borntyping/rust-simple_logger.svg)](https://travis-ci.org/borntyping/rust-simple_logger) [![](https://img.shields.io/github/issues/borntyping/rust-simple_logger.svg)](https://github.com/borntyping/rust-simple_logger/issues)
 
-A logger that prints all messages and uses an output format similar to [Supervisord](http://supervisord.org/).
+A logger that prints all messages with a readable output format.
+
+The output format is based on the format used by [Supervisord](http://supervisord.org/).
 
 Future updates may include coulored output based on the log level of the message and selecting a `max_log_level` based on the value of an input string (e.g. from a flag parsed by [docopt](https://github.com/docopt/docopt.rs)).
 
