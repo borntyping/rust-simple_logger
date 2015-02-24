@@ -10,9 +10,9 @@ impl log::Log for SimpleLogger {
 
     fn log(&self, record: &log::LogRecord) {
         println!(
-            "{} {} [{}] {}",
+            "{} {:<5} [{}] {}",
             time::strftime("%Y-%m-%d %H:%M:%S", &time::now()).unwrap(),
-            record.level(),
+            record.level().to_string(),
             record.location().module_path,
             record.args());
     }
