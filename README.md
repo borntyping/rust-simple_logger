@@ -6,6 +6,10 @@ The output format is based on the format used by [Supervisord](http://supervisor
 
 Future updates may include coulored output based on the log level of the message and selecting a `max_log_level` based on the value of an input string (e.g. from a flag parsed by [docopt](https://github.com/docopt/docopt.rs)).
 
+* `Source on GitHub <https://github.com/borntyping/rust-simple_logger>`_
+* `Packages on Crates.io <https://crates.io/crates/simple_logger>`_
+* `Builds on Travis CI <https://travis-ci.org/borntyping/rust-simple_logger>`_
+
 Usage
 -----
 
