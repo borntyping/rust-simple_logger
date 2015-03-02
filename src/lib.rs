@@ -1,3 +1,5 @@
+//! A logger that prints all messages with a readable output format.
+
 extern crate log;
 extern crate time;
 
