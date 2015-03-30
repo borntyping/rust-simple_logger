@@ -1,11 +1,11 @@
 [package]
 name = "simple_logger"
-version = "0.3.0"
+version = "0.3.1"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
 repository = "https://github.com/borntyping/rust-simple_logger"
 
 [dependencies]
-log = "^0.3.0"
-time = "^0.1.21"
+log = "^0.3.1"
+time = "^0.1.22"
