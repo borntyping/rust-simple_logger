@@ -2,9 +2,7 @@
 
 A logger that prints all messages with a readable output format.
 
-The output format is based on the format used by [Supervisord](http://supervisord.org/).
-
-Future updates may include coulored output based on the log level of the message and selecting a `max_log_level` based on the value of an input string (e.g. from a flag parsed by [docopt](https://github.com/docopt/docopt.rs)).
+The output format is based on the format used by [Supervisord](http://supervisord.org/). Future updates may include coulored output based on the log level of the message and selecting a log level based on the value of an input string (e.g. from a flag parsed by [docopt](https://github.com/docopt/docopt.rs)).
 
 * `Source on GitHub <https://github.com/borntyping/rust-simple_logger>`_
 * `Packages on Crates.io <https://crates.io/crates/simple_logger>`_
@@ -34,7 +32,7 @@ This outputs:
 You can run the above example with:
 
 ```bash
-cargo run --example logging_example
+cargo run --example init
 ```
 
 Licence
