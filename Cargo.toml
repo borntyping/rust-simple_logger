@@ -7,5 +7,5 @@ description = "A logger that prints all messages with a readable output format"
 repository = "https://github.com/borntyping/rust-simple_logger"
 
 [dependencies]
-log = "^0.3.1"
+log = { version = "^0.4.1", features = ["std"] }
 time = "^0.1.25"
