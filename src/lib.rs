@@ -1,29 +1,31 @@
 //! A logger that prints all messages with a readable output format.
 
-#[macro_use]
 extern crate log;
 extern crate time;
 
-use log::{Log,LogLevel,LogMetadata,LogRecord,SetLoggerError};
+use log::{Log,Level,Metadata,Record,SetLoggerError};
 
 struct SimpleLogger {
-    log_level: LogLevel,
+    level: Level,
 }
 
 impl Log for SimpleLogger {
-    fn enabled(&self, metadata: &LogMetadata) -> bool {
-        metadata.level() <= self.log_level
+    fn enabled(&self, metadata: &Metadata) -> bool {
+        metadata.level() <= self.level
     }
 
-    fn log(&self, record: &LogRecord) {
+    fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             println!(
                 "{} {:<5} [{}] {}",
                 time::strftime("%Y-%m-%d %H:%M:%S", &time::now()).unwrap(),
                 record.level().to_string(),
-                record.location().module_path(),
+                record.module_path().unwrap_or_default(),
                 record.args());
         }
+    }
+
+    fn flush(&self) {
     }
 }
 
@@ -35,17 +37,17 @@ impl Log for SimpleLogger {
 /// # extern crate simple_logger;
 /// #
 /// # fn main() {
-/// simple_logger::init_with_level(log::LogLevel::Warn).unwrap();
+/// simple_logger::init_with_level(log::Level::Warn).unwrap();
 ///
 /// warn!("This is an example message.");
 /// info!("This message will not be logged.");
 /// # }
 /// ```
-pub fn init_with_level(log_level: LogLevel) -> Result<(), SetLoggerError> {
-    log::set_logger(|max_log_level| {
-        max_log_level.set(log_level.to_log_level_filter());
-        return Box::new(SimpleLogger { log_level: log_level });
-    })
+pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
+    let logger = SimpleLogger { level };
+    log::set_boxed_logger(Box::new(logger))?;
+    log::set_max_level(level.to_level_filter());
+    Ok(())
 }
 
 /// Initializes the global logger with a SimpleLogger instance with
@@ -61,5 +63,5 @@ pub fn init_with_level(log_level: LogLevel) -> Result<(), SetLoggerError> {
 /// # }
 /// ```
 pub fn init() -> Result<(), SetLoggerError> {
-    init_with_level(LogLevel::Trace)
+    init_with_level(Level::Trace)
 }
