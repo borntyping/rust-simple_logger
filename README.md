@@ -35,6 +35,14 @@ You can run the above example with:
 cargo run --example init
 ```
 
+If you want to remove the colorized output and its dependencies, add the
+the following to your Cargo.toml:
+
+```
+[dependencies.simple_logger]
+default-features = false
+```
+
 Licence
 -------
 
