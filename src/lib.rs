@@ -3,6 +3,9 @@
 extern crate log;
 extern crate time;
 
+#[cfg(feature = "colored")] extern crate colored;
+#[cfg(feature = "colored")] use colored::*;
+
 use log::{Log,Level,Metadata,Record,SetLoggerError};
 
 struct SimpleLogger {
@@ -16,10 +19,24 @@ impl Log for SimpleLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
+            let level_string = {
+                #[cfg(feature = "colored")] {
+                    match record.level() {
+                        Level::Error => record.level().to_string().red(),
+                        Level::Warn => record.level().to_string().yellow(),
+                        Level::Info => record.level().to_string().cyan(),
+                        Level::Debug => record.level().to_string().purple(),
+                        Level::Trace => record.level().to_string().normal(),
+                    }
+                }
+                #[cfg(not(feature = "colored"))] {
+                    record.level().to_string()
+                }
+            };
             println!(
                 "{} {:<5} [{}] {}",
                 time::strftime("%Y-%m-%d %H:%M:%S", &time::now()).unwrap(),
-                record.level().to_string(),
+                level_string,
                 record.module_path().unwrap_or_default(),
                 record.args());
         }
