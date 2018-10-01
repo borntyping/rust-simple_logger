@@ -1,9 +1,10 @@
 //! A logger that prints all messages with a readable output format.
 
 extern crate log;
-extern crate time;
+extern crate chrono;
 
 use log::{Log,Level,Metadata,Record,SetLoggerError};
+use chrono::Local;
 
 struct SimpleLogger {
     level: Level,
@@ -18,7 +19,7 @@ impl Log for SimpleLogger {
         if self.enabled(record.metadata()) {
             println!(
                 "{} {:<5} [{}] {}",
-                time::strftime("%Y-%m-%d %H:%M:%S", &time::now()).unwrap(),
+                Local::now().format("%Y-%m-%d %H:%M:%S"),
                 record.level().to_string(),
                 record.module_path().unwrap_or_default(),
                 record.args());
