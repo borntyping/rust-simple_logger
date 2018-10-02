@@ -8,4 +8,4 @@ repository = "https://github.com/borntyping/rust-simple_logger"
 
 [dependencies]
 log = { version = "^0.4.1", features = ["std"] }
-time = "^0.1.25"
+chrono = "0.4.6"
