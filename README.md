@@ -4,9 +4,9 @@ A logger that prints all messages with a readable output format.
 
 The output format is based on the format used by [Supervisord](http://supervisord.org/).
 
-* [Surce on GitHub](https://github.com/borntyping/rust-simple_logger)
-* [Pckages on Crates.io](https://crates.io/crates/simple_logger)
-* [Bilds on Travis CI](https://travis-ci.org/borntyping/rust-simple_logger)
+* [Source on GitHub](https://github.com/borntyping/rust-simple_logger)
+* [Packages on Crates.io](https://crates.io/crates/simple_logger)
+* [Builds on Travis CI](https://travis-ci.org/borntyping/rust-simple_logger)
 
 Usage
 -----
