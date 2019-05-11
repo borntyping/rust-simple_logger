@@ -1,12 +1,13 @@
 //! A logger that prints all messages with a readable output format.
 
 extern crate log;
-extern crate time;
+extern crate chrono;
 
 #[cfg(feature = "colored")] extern crate colored;
 #[cfg(feature = "colored")] use colored::*;
 
 use log::{Log,Level,Metadata,Record,SetLoggerError};
+use chrono::Local;
 
 struct SimpleLogger {
     level: Level,
@@ -35,7 +36,7 @@ impl Log for SimpleLogger {
             };
             println!(
                 "{} {:<5} [{}] {}",
-                time::strftime("%Y-%m-%d %H:%M:%S", &time::now()).unwrap(),
+                Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                 level_string,
                 record.module_path().unwrap_or_default(),
                 record.args());
