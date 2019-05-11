@@ -19,8 +19,8 @@ impl Log for SimpleLogger {
         if self.enabled(record.metadata()) {
             println!(
                 "{} {:<5} [{}] {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S"),
-                record.level().to_string(),
+                Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
+                record.level(),
                 record.module_path().unwrap_or_default(),
                 record.args());
         }
