@@ -34,11 +34,16 @@ impl Log for SimpleLogger {
                     record.level().to_string()
                 }
             };
+            let target = if record.target().len() > 0 {
+                record.target()
+            } else {
+                record.module_path().unwrap_or_default()
+            };
             println!(
                 "{} {:<5} [{}] {}",
                 Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                 level_string,
-                record.module_path().unwrap_or_default(),
+                target,
                 record.args());
         }
     }
