@@ -13,3 +13,7 @@ default = ["colored"]
 log = { version = "^0.4.5", features = ["std"] }
 chrono = "0.4.6"
 colored = { version = "^1.6", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+atty = "0.2.13"
+winapi = { version = "0.3", features = ["winbase"]}
