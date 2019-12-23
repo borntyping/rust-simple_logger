@@ -59,6 +59,22 @@ impl Log for SimpleLogger {
     fn flush(&self) {}
 }
 
+#[cfg(windows)]
+fn set_up_color_terminal() {
+    use atty::Stream;
+
+    if atty::is(Stream::Stdout) {
+        unsafe {
+            use winapi::um::consoleapi::*;
+            use winapi::um::processenv::*;
+            use winapi::um::winbase::*;
+
+            let stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+            SetConsoleMode(stdout, 0x0001 | 0x0002 | 0x0004);
+        }
+    }
+}
+
 /// Initializes the global logger with a SimpleLogger instance with
 /// `max_log_level` set to a specific log level.
 ///
@@ -74,20 +90,8 @@ impl Log for SimpleLogger {
 /// # }
 /// ```
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    if cfg!(windows) && cfg!(feature = "colored") {
-        use atty::Stream;
-
-        if atty::is(Stream::Stdout) {
-            unsafe {
-                use winapi::um::consoleapi::*;
-                use winapi::um::processenv::*;
-                use winapi::um::winbase::*;
-
-                let stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-                SetConsoleMode(stdout, 0x0001 | 0x0002 | 0x0004);
-            }
-        }
-    }
+    #[cfg(all(windows, feature = "colored"))]
+    set_up_color_terminal();
 
     let logger = SimpleLogger { level };
     log::set_boxed_logger(Box::new(logger))?;
