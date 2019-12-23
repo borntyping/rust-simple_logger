@@ -68,9 +68,15 @@ fn set_up_color_terminal() {
             use winapi::um::consoleapi::*;
             use winapi::um::processenv::*;
             use winapi::um::winbase::*;
+            use winapi::um::wincon::*;
 
             let stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-            SetConsoleMode(stdout, 0x0001 | 0x0002 | 0x0004);
+            SetConsoleMode(
+                stdout,
+                ENABLE_PROCESSED_OUTPUT
+                    | ENABLE_WRAP_AT_EOL_OUTPUT
+                    | ENABLE_VIRTUAL_TERMINAL_PROCESSING,
+            );
         }
     }
 }
