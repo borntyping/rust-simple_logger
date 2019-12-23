@@ -79,7 +79,7 @@ fn set_up_color_terminal() {
 
             let mut mode: winapi::shared::minwindef::DWORD = 0;
 
-            if !GetConsoleMode(stdout, &mut mode) {
+            if GetConsoleMode(stdout, &mut mode) == 0 {
                 return;
             }
 

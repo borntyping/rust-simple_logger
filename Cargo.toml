@@ -16,4 +16,4 @@ colored = { version = "^1.6", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 atty = "0.2.13"
-winapi = { version = "0.3", features = ["winbase"]}
+winapi = { version = "0.3", features = ["handleapi", "winbase"]}
