@@ -66,17 +66,24 @@ fn set_up_color_terminal() {
     if atty::is(Stream::Stdout) {
         unsafe {
             use winapi::um::consoleapi::*;
+            use winapi::um::handleapi::*;
             use winapi::um::processenv::*;
             use winapi::um::winbase::*;
             use winapi::um::wincon::*;
 
             let stdout = GetStdHandle(STD_OUTPUT_HANDLE);
-            SetConsoleMode(
-                stdout,
-                ENABLE_PROCESSED_OUTPUT
-                    | ENABLE_WRAP_AT_EOL_OUTPUT
-                    | ENABLE_VIRTUAL_TERMINAL_PROCESSING,
-            );
+
+            if stdout == INVALID_HANDLE_VALUE {
+                return;
+            }
+
+            let mut mode: winapi::shared::minwindef::DWORD = 0;
+
+            if !GetConsoleMode(stdout, &mut mode) {
+                return;
+            }
+
+            SetConsoleMode(stdout, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
     }
 }
