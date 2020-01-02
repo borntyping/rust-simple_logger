@@ -1,13 +1,18 @@
 //! A logger that prints all messages with a readable output format.
 
-extern crate log;
+#[cfg(windows)]
+extern crate atty;
 extern crate chrono;
+#[cfg(feature = "colored")]
+extern crate colored;
+extern crate log;
+#[cfg(windows)]
+extern crate winapi;
 
-#[cfg(feature = "colored")] extern crate colored;
-#[cfg(feature = "colored")] use colored::*;
-
-use log::{Log,Level,Metadata,Record,SetLoggerError};
 use chrono::Local;
+#[cfg(feature = "colored")]
+use colored::*;
+use log::{Level, Log, Metadata, Record, SetLoggerError};
 
 struct SimpleLogger {
     level: Level,
@@ -21,7 +26,8 @@ impl Log for SimpleLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             let level_string = {
-                #[cfg(feature = "colored")] {
+                #[cfg(feature = "colored")]
+                {
                     match record.level() {
                         Level::Error => record.level().to_string().red(),
                         Level::Warn => record.level().to_string().yellow(),
@@ -30,7 +36,8 @@ impl Log for SimpleLogger {
                         Level::Trace => record.level().to_string().normal(),
                     }
                 }
-                #[cfg(not(feature = "colored"))] {
+                #[cfg(not(feature = "colored"))]
+                {
                     record.level().to_string()
                 }
             };
@@ -44,11 +51,40 @@ impl Log for SimpleLogger {
                 Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                 level_string,
                 target,
-                record.args());
+                record.args()
+            );
         }
     }
 
-    fn flush(&self) {
+    fn flush(&self) {}
+}
+
+#[cfg(windows)]
+fn set_up_color_terminal() {
+    use atty::Stream;
+
+    if atty::is(Stream::Stdout) {
+        unsafe {
+            use winapi::um::consoleapi::*;
+            use winapi::um::handleapi::*;
+            use winapi::um::processenv::*;
+            use winapi::um::winbase::*;
+            use winapi::um::wincon::*;
+
+            let stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+
+            if stdout == INVALID_HANDLE_VALUE {
+                return;
+            }
+
+            let mut mode: winapi::shared::minwindef::DWORD = 0;
+
+            if GetConsoleMode(stdout, &mut mode) == 0 {
+                return;
+            }
+
+            SetConsoleMode(stdout, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
+        }
     }
 }
 
@@ -67,6 +103,9 @@ impl Log for SimpleLogger {
 /// # }
 /// ```
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
+    #[cfg(all(windows, feature = "colored"))]
+    set_up_color_terminal();
+
     let logger = SimpleLogger { level };
     log::set_boxed_logger(Box::new(logger))?;
     log::set_max_level(level.to_level_filter());

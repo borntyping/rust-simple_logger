@@ -10,4 +10,3 @@ fn main() {
     warn!("This will be logged.");
     info!("This will NOT be logged.");
 }
-
