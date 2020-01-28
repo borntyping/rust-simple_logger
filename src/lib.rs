@@ -2,6 +2,7 @@
 
 #[cfg(windows)]
 extern crate atty;
+#[cfg(feature = "chrono")]
 extern crate chrono;
 #[cfg(feature = "colored")]
 extern crate colored;
@@ -9,6 +10,7 @@ extern crate log;
 #[cfg(windows)]
 extern crate winapi;
 
+#[cfg(feature = "chrono")]
 use chrono::Local;
 #[cfg(feature = "colored")]
 use colored::*;
@@ -46,13 +48,21 @@ impl Log for SimpleLogger {
             } else {
                 record.module_path().unwrap_or_default()
             };
-            println!(
-                "{} {:<5} [{}] {}",
-                Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
-                level_string,
-                target,
-                record.args()
-            );
+            #[cfg(feature = "chrono")] {
+                println!(
+                    "{} {:<5} [{}] {}",
+                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
+                    level_string,
+                    target,
+                    record.args());
+            }
+            #[cfg(not(feature = "chrono"))] {
+                println!(
+                    "{:<5} [{}] {}",
+                    level_string,
+                    target,
+                    record.args());
+            }
         }
     }
 
