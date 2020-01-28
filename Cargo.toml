@@ -1,6 +1,6 @@
 [package]
 name = "simple_logger"
-version = "1.3.0"
+version = "1.4.0"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
@@ -13,3 +13,7 @@ default = ["colored", "chrono"]
 log = { version = "^0.4.5", features = ["std"] }
 chrono = { version = "0.4.6", optional = true }
 colored = { version = "^1.6", optional = true }
+
+[target.'cfg(windows)'.dependencies]
+atty = "0.2.13"
+winapi = { version = "0.3", features = ["handleapi", "winbase"]}
