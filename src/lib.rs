@@ -145,18 +145,18 @@ fn init_by_env() {
     match std::env::var("RUST_LOG") {
         Ok(x) => {
             if x == "trace".into_string() {
-                simple_logger::init_with_level(log::Level::Trace).unwrap();
+                init_with_level(log::Level::Trace).unwrap();
             } else if x == "debug".into_string() {
-                simple_logger::init_with_level(log::Level::Debug).unwrap();
+                init_with_level(log::Level::Debug).unwrap();
             } else if x == "info".into_string() {
-                simple_logger::init_with_level(log::Level::Info).unwrap();
+                init_with_level(log::Level::Info).unwrap();
             } else if x == "warn".into_string() {
-                simple_logger::init_with_level(log::Level::Warn).unwrap();
+                init_with_level(log::Level::Warn).unwrap();
             } else {
-                simple_logger::init_with_level(log::Level::Error).unwrap();
+                init_with_level(log::Level::Error).unwrap();
             }
         }
         _ =>
-            simple_logger::init_with_level(log::Level::Error).unwrap(),
+            init_with_level(log::Level::Error).unwrap(),
     }
 }
