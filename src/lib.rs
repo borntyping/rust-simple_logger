@@ -144,16 +144,12 @@ pub fn init() -> Result<(), SetLoggerError> {
 fn init_by_env() {
     match std::env::var("RUST_LOG") {
         Ok(x) => {
-            if x == "trace".into_string() {
-                init_with_level(log::Level::Trace).unwrap();
-            } else if x == "debug".into_string() {
-                init_with_level(log::Level::Debug).unwrap();
-            } else if x == "info".into_string() {
-                init_with_level(log::Level::Info).unwrap();
-            } else if x == "warn".into_string() {
-                init_with_level(log::Level::Warn).unwrap();
-            } else {
-                init_with_level(log::Level::Error).unwrap();
+            match x.to_lowercase().as_str() {
+                "trace" => init_with_level(log::Level::Trace).unwrap(),
+                "debug" => init_with_level(log::Level::Debug).unwrap(),
+                "info" => init_with_level(log::Level::Info).unwrap(),
+                "warn" => init_with_level(log::Level::Warn).unwrap(),
+                _ => init_with_level(log::Level::Error).unwrap(),
             }
         }
         _ =>
