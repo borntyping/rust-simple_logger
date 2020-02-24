@@ -137,7 +137,7 @@ pub fn init() -> Result<(), SetLoggerError> {
 /// # #[macro_use] extern crate simple_logger;
 /// #
 /// # fn main() {
-/// init_by_env();
+/// simple_logger::init_by_env();
 /// warn!("This is an example message.");
 /// # }
 /// ```
