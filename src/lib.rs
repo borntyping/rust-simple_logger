@@ -141,7 +141,7 @@ pub fn init() -> Result<(), SetLoggerError> {
 /// warn!("This is an example message.");
 /// # }
 /// ```
-fn init_by_env() {
+pub fn init_by_env() {
     match std::env::var("RUST_LOG") {
         Ok(x) => {
             match x.to_lowercase().as_str() {
