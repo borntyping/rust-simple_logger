@@ -137,3 +137,32 @@ pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
 pub fn init() -> Result<(), SetLoggerError> {
     init_with_level(Level::Trace)
 }
+
+
+/// A macro for simulating env_logger behavior, which enables the user to choose log level by
+/// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
+/// recognized as one of the log levels, this function with use the `Error` level by default.
+/// ```
+/// # #[macro_use] extern crate log;
+/// # #[macro_use] extern crate simple_logger;
+/// #
+/// # fn main() {
+/// simple_logger::init_by_env();
+/// warn!("This is an example message.");
+/// # }
+/// ```
+pub fn init_by_env() {
+    match std::env::var("RUST_LOG") {
+        Ok(x) => {
+            match x.to_lowercase().as_str() {
+                "trace" => init_with_level(log::Level::Trace).unwrap(),
+                "debug" => init_with_level(log::Level::Debug).unwrap(),
+                "info" => init_with_level(log::Level::Info).unwrap(),
+                "warn" => init_with_level(log::Level::Warn).unwrap(),
+                _ => init_with_level(log::Level::Error).unwrap(),
+            }
+        }
+        _ =>
+            init_with_level(log::Level::Error).unwrap(),
+    }
+}
