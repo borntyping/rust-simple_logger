@@ -48,20 +48,19 @@ impl Log for SimpleLogger {
             } else {
                 record.module_path().unwrap_or_default()
             };
-            #[cfg(feature = "chrono")] {
+            #[cfg(feature = "chrono")]
+            {
                 println!(
                     "{} {:<5} [{}] {}",
                     Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     level_string,
                     target,
-                    record.args());
+                    record.args()
+                );
             }
-            #[cfg(not(feature = "chrono"))] {
-                println!(
-                    "{:<5} [{}] {}",
-                    level_string,
-                    target,
-                    record.args());
+            #[cfg(not(feature = "chrono"))]
+            {
+                println!("{:<5} [{}] {}", level_string, target, record.args());
             }
         }
     }
@@ -138,7 +137,6 @@ pub fn init() -> Result<(), SetLoggerError> {
     init_with_level(Level::Trace)
 }
 
-
 /// A macro for simulating env_logger behavior, which enables the user to choose log level by
 /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
 /// recognized as one of the log levels, this function with use the `Error` level by default.
@@ -153,16 +151,13 @@ pub fn init() -> Result<(), SetLoggerError> {
 /// ```
 pub fn init_by_env() {
     match std::env::var("RUST_LOG") {
-        Ok(x) => {
-            match x.to_lowercase().as_str() {
-                "trace" => init_with_level(log::Level::Trace).unwrap(),
-                "debug" => init_with_level(log::Level::Debug).unwrap(),
-                "info" => init_with_level(log::Level::Info).unwrap(),
-                "warn" => init_with_level(log::Level::Warn).unwrap(),
-                _ => init_with_level(log::Level::Error).unwrap(),
-            }
-        }
-        _ =>
-            init_with_level(log::Level::Error).unwrap(),
+        Ok(x) => match x.to_lowercase().as_str() {
+            "trace" => init_with_level(log::Level::Trace).unwrap(),
+            "debug" => init_with_level(log::Level::Debug).unwrap(),
+            "info" => init_with_level(log::Level::Info).unwrap(),
+            "warn" => init_with_level(log::Level::Warn).unwrap(),
+            _ => init_with_level(log::Level::Error).unwrap(),
+        },
+        _ => init_with_level(log::Level::Error).unwrap(),
     }
 }
