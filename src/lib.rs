@@ -43,7 +43,7 @@ impl Log for SimpleLogger {
                     record.level().to_string()
                 }
             };
-            let target = if record.target().len() > 0 {
+            let target = if !record.target().is_empty() {
                 record.target()
             } else {
                 record.module_path().unwrap_or_default()
