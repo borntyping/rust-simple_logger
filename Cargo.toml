@@ -5,6 +5,7 @@ license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
 repository = "https://github.com/borntyping/rust-simple_logger"
+edition = "2018"
 
 [features]
 default = ["colored", "chrono"]
