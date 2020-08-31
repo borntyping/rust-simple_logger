@@ -1,15 +1,5 @@
 //! A logger that prints all messages with a readable output format.
 
-#[cfg(windows)]
-extern crate atty;
-#[cfg(feature = "chrono")]
-extern crate chrono;
-#[cfg(feature = "colored")]
-extern crate colored;
-extern crate log;
-#[cfg(windows)]
-extern crate winapi;
-
 #[cfg(feature = "chrono")]
 use chrono::Local;
 #[cfg(feature = "colored")]
@@ -101,15 +91,10 @@ fn set_up_color_terminal() {
 /// `max_log_level` set to a specific log level.
 ///
 /// ```
-/// # #[macro_use] extern crate log;
-/// # extern crate simple_logger;
-/// #
-/// # fn main() {
 /// simple_logger::init_with_level(log::Level::Warn).unwrap();
 ///
-/// warn!("This is an example message.");
-/// info!("This message will not be logged.");
-/// # }
+/// log::warn!("This is an example message.");
+/// log::info!("This message will not be logged.");
 /// ```
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
     #[cfg(all(windows, feature = "colored"))]
@@ -125,13 +110,8 @@ pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
 /// `max_log_level` set to `LogLevel::Trace`.
 ///
 /// ```
-/// # #[macro_use] extern crate log;
-/// # extern crate simple_logger;
-/// #
-/// # fn main() {
 /// simple_logger::init().unwrap();
-/// warn!("This is an example message.");
-/// # }
+/// log::warn!("This is an example message.");
 /// ```
 pub fn init() -> Result<(), SetLoggerError> {
     init_with_level(Level::Trace)
@@ -141,13 +121,8 @@ pub fn init() -> Result<(), SetLoggerError> {
 /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
 /// recognized as one of the log levels, this function with use the `Error` level by default.
 /// ```
-/// # #[macro_use] extern crate log;
-/// # #[macro_use] extern crate simple_logger;
-/// #
-/// # fn main() {
 /// simple_logger::init_by_env();
-/// warn!("This is an example message.");
-/// # }
+/// log::warn!("This is an example message.");
 /// ```
 pub fn init_by_env() {
     match std::env::var("RUST_LOG") {
