@@ -8,11 +8,19 @@ use log::{Level, Log, Metadata, Record, SetLoggerError};
 
 struct SimpleLogger {
     level: Level,
+    /// List of whitelisted log targets
+    /// if empty everything will be logged
+    whitelisted_targets: Vec<String>,
 }
 
 impl Log for SimpleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         metadata.level() <= self.level
+            && (self.whitelisted_targets.is_empty()
+                || self
+                    .whitelisted_targets
+                    .iter()
+                    .any(|t| t == metadata.target()))
     }
 
     fn log(&self, record: &Record) {
@@ -100,7 +108,31 @@ pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
     #[cfg(all(windows, feature = "colored"))]
     set_up_color_terminal();
 
-    let logger = SimpleLogger { level };
+    let logger = SimpleLogger {
+        level,
+        whitelisted_targets: vec![],
+    };
+    log::set_boxed_logger(Box::new(logger))?;
+    log::set_max_level(level.to_level_filter());
+    Ok(())
+}
+
+/// Initializes the global logger with a SimpleLogger instance with
+/// `max_log_level` set to a specific log level as well as specific log targets.
+///
+/// ```
+/// simple_logger::init_with_level_and_targets(log::Level::Info, &["wrong_target"]).unwrap();
+///
+/// log::info!("This will NOT be logged. (Wrong target)");
+/// ```
+pub fn init_with_level_and_targets(level: Level, targets: &[&str]) -> Result<(), SetLoggerError> {
+    #[cfg(all(windows, feature = "colored"))]
+    set_up_color_terminal();
+
+    let logger = SimpleLogger {
+        level,
+        whitelisted_targets: targets.iter().map(|s| s.to_string()).collect(),
+    };
     log::set_boxed_logger(Box::new(logger))?;
     log::set_max_level(level.to_level_filter());
     Ok(())
