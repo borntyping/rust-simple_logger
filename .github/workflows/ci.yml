@@ -67,4 +67,4 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-      - run: cargo publish --token ${{ secrets.CRATES_TOKEN }})
+      - run: cargo publish --token ${{ secrets.CRATES_TOKEN }}
