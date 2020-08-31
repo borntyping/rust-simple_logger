@@ -1,10 +1,10 @@
-use log::{Level, LevelFilter};
+use log::LevelFilter;
 use simple_logger::SimpleLogger;
 
 fn main() {
     SimpleLogger::new()
-        .with_level(Level::Info)
-        .with_target_level("init_with_target_level", LevelFilter::Off)
+        .with_level(LevelFilter::Info)
+        .with_module_level("init_with_target_level", LevelFilter::Off)
         .init()
         .unwrap();
 

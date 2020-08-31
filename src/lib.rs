@@ -9,9 +9,9 @@ use std::collections::HashMap;
 
 pub struct SimpleLogger {
     /// The default logging level
-    default_level: Level,
-    /// The specific logging level for each targets
-    target_levels: HashMap<String, LevelFilter>,
+    default_level: LevelFilter,
+    /// The specific logging level for each modules
+    module_levels: HashMap<String, LevelFilter>,
 }
 
 impl SimpleLogger {
@@ -25,8 +25,8 @@ impl SimpleLogger {
     /// ```
     pub fn new() -> SimpleLogger {
         SimpleLogger {
-            default_level: Level::Trace,
-            target_levels: HashMap::new(),
+            default_level: LevelFilter::Trace,
+            module_levels: HashMap::new(),
         }
     }
 
@@ -42,25 +42,25 @@ impl SimpleLogger {
     pub fn from_env() -> SimpleLogger {
         let level = match std::env::var("RUST_LOG") {
             Ok(x) => match x.to_lowercase().as_str() {
-                "trace" => log::Level::Trace,
-                "debug" => log::Level::Debug,
-                "info" => log::Level::Info,
-                "warn" => log::Level::Warn,
-                _ => log::Level::Error,
+                "trace" => log::LevelFilter::Trace,
+                "debug" => log::LevelFilter::Debug,
+                "info" => log::LevelFilter::Info,
+                "warn" => log::LevelFilter::Warn,
+                _ => log::LevelFilter::Error,
             },
-            _ => log::Level::Error,
+            _ => log::LevelFilter::Error,
         };
 
         SimpleLogger::new().with_level(level)
     }
 
     /// Set the 'default' log level.
-    pub fn with_level(mut self, level: Level) -> SimpleLogger {
+    pub fn with_level(mut self, level: LevelFilter) -> SimpleLogger {
         self.default_level = level;
         self
     }
 
-    /// Override the log level for specific target.
+    /// Override the log level for specific module.
     ///
     /// # Examples
     ///
@@ -70,7 +70,7 @@ impl SimpleLogger {
     /// use simple_logger::SimpleLogger;
     /// use log::LevelFilter;
     ///
-    /// SimpleLogger::new().with_target_level("something", LevelFilter::Warn).init();
+    /// SimpleLogger::new().with_module_level("something", LevelFilter::Warn).init();
     /// ```
     ///
     /// Disable logging for specific crate:
@@ -79,10 +79,10 @@ impl SimpleLogger {
     /// use simple_logger::SimpleLogger;
     /// use log::LevelFilter;
     ///
-    /// SimpleLogger::new().with_target_level("something", LevelFilter::Off).init();
+    /// SimpleLogger::new().with_module_level("something", LevelFilter::Off).init();
     /// ```
-    pub fn with_target_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
-        self.target_levels.insert(target.to_string(), level);
+    pub fn with_module_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
+        self.module_levels.insert(target.to_string(), level);
         self
     }
 
@@ -91,7 +91,7 @@ impl SimpleLogger {
         mut self,
         target_levels: HashMap<String, LevelFilter>,
     ) -> SimpleLogger {
-        self.target_levels = target_levels;
+        self.module_levels = target_levels;
         self
     }
 
@@ -101,7 +101,11 @@ impl SimpleLogger {
         #[cfg(all(windows, feature = "colored"))]
         set_up_color_terminal();
 
-        log::set_max_level(LevelFilter::Trace);
+        let max_level = self.module_levels.values().copied().max();
+        let max_level = max_level
+            .map(|lvl| lvl.max(self.default_level))
+            .unwrap_or(self.default_level);
+        log::set_max_level(max_level);
         log::set_boxed_logger(Box::new(self))?;
         Ok(())
     }
@@ -118,10 +122,10 @@ impl Log for SimpleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
         metadata.level().to_level_filter()
             <= self
-                .target_levels
+                .module_levels
                 .get(metadata.target())
-                .cloned()
-                .unwrap_or_else(|| self.default_level.to_level_filter())
+                .copied()
+                .unwrap_or_else(|| self.default_level)
     }
 
     fn log(&self, record: &Record) {
@@ -198,7 +202,9 @@ fn set_up_color_terminal() {
 
 /// See [this](struct.SimpleLogger.html#method.with_level)
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    SimpleLogger::new().with_level(level).init()
+    SimpleLogger::new()
+        .with_level(level.to_level_filter())
+        .init()
 }
 
 /// See [this](struct.SimpleLogger.html#method.new)
