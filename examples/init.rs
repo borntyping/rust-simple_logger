@@ -1,5 +1,7 @@
+use simple_logger::SimpleLogger;
+
 fn main() {
-    simple_logger::init().unwrap();
+    SimpleLogger::new().init().unwrap();
 
     log::warn!("This is an example message.");
 }

@@ -4,23 +4,124 @@
 use chrono::Local;
 #[cfg(feature = "colored")]
 use colored::*;
-use log::{Level, Log, Metadata, Record, SetLoggerError};
+use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
+use std::collections::HashMap;
 
-struct SimpleLogger {
-    level: Level,
-    /// List of whitelisted log targets
-    /// if empty everything will be logged
-    whitelisted_targets: Vec<String>,
+pub struct SimpleLogger {
+    /// The default logging level
+    default_level: Level,
+    /// The specific logging level for each targets
+    target_levels: HashMap<String, LevelFilter>,
+}
+
+impl SimpleLogger {
+    /// Initializes the global logger with a SimpleLogger instance with
+    /// default log level set to `Level::Trace`.
+    ///
+    /// ```no_run
+    /// use simple_logger::SimpleLogger;
+    /// SimpleLogger::new();
+    /// log::warn!("This is an example message.");
+    /// ```
+    pub fn new() -> SimpleLogger {
+        SimpleLogger {
+            default_level: Level::Trace,
+            target_levels: HashMap::new(),
+        }
+    }
+
+    /// A macro for simulating env_logger behavior, which enables the user to choose log level by
+    /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
+    /// recognized as one of the log levels, this function with use the `Error` level by default.
+    ///
+    /// ```no_run
+    /// use simple_logger::SimpleLogger;
+    /// SimpleLogger::from_env();
+    /// log::warn!("This is an example message.");
+    /// ```
+    pub fn from_env() -> SimpleLogger {
+        let level = match std::env::var("RUST_LOG") {
+            Ok(x) => match x.to_lowercase().as_str() {
+                "trace" => log::Level::Trace,
+                "debug" => log::Level::Debug,
+                "info" => log::Level::Info,
+                "warn" => log::Level::Warn,
+                _ => log::Level::Error,
+            },
+            _ => log::Level::Error,
+        };
+
+        SimpleLogger::new().with_level(level)
+    }
+
+    /// Set the 'default' log level.
+    pub fn with_level(mut self, level: Level) -> SimpleLogger {
+        self.default_level = level;
+        self
+    }
+
+    /// Override the log level for specific target.
+    ///
+    /// # Examples
+    ///
+    /// Change log level for specific crate:
+    ///
+    /// ```no_run
+    /// use simple_logger::SimpleLogger;
+    /// use log::LevelFilter;
+    ///
+    /// SimpleLogger::new().with_target_level("something", LevelFilter::Warn).init();
+    /// ```
+    ///
+    /// Disable logging for specific crate:
+    ///
+    /// ```no_run
+    /// use simple_logger::SimpleLogger;
+    /// use log::LevelFilter;
+    ///
+    /// SimpleLogger::new().with_target_level("something", LevelFilter::Off).init();
+    /// ```
+    pub fn with_target_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
+        self.target_levels.insert(target.to_string(), level);
+        self
+    }
+
+    /// Override the log level for specific targets.
+    pub fn with_target_levels(
+        mut self,
+        target_levels: HashMap<String, LevelFilter>,
+    ) -> SimpleLogger {
+        self.target_levels = target_levels;
+        self
+    }
+
+    /// 'Init' the actual logger, instantiate it and configure it,
+    /// this method MUST be called in order for the logger to be effective.
+    pub fn init(self) -> Result<(), SetLoggerError> {
+        #[cfg(all(windows, feature = "colored"))]
+        set_up_color_terminal();
+
+        log::set_max_level(LevelFilter::Trace);
+        log::set_boxed_logger(Box::new(self))?;
+        Ok(())
+    }
+}
+
+impl Default for SimpleLogger {
+    /// See [this](struct.SimpleLogger.html#method.new)
+    fn default() -> Self {
+        SimpleLogger::new()
+    }
 }
 
 impl Log for SimpleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level() <= self.level
-            && (self.whitelisted_targets.is_empty()
-                || self
-                    .whitelisted_targets
-                    .iter()
-                    .any(|t| t == metadata.target()))
+        metadata.level().to_level_filter()
+            <= self
+                .target_levels
+                .get(metadata.target())
+                .cloned()
+                .unwrap_or_else(|| self.default_level.to_level_filter())
     }
 
     fn log(&self, record: &Record) {
@@ -95,76 +196,17 @@ fn set_up_color_terminal() {
     }
 }
 
-/// Initializes the global logger with a SimpleLogger instance with
-/// `max_log_level` set to a specific log level.
-///
-/// ```
-/// simple_logger::init_with_level(log::Level::Warn).unwrap();
-///
-/// log::warn!("This is an example message.");
-/// log::info!("This message will not be logged.");
-/// ```
+/// See [this](struct.SimpleLogger.html#method.with_level)
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    #[cfg(all(windows, feature = "colored"))]
-    set_up_color_terminal();
-
-    let logger = SimpleLogger {
-        level,
-        whitelisted_targets: vec![],
-    };
-    log::set_boxed_logger(Box::new(logger))?;
-    log::set_max_level(level.to_level_filter());
-    Ok(())
+    SimpleLogger::new().with_level(level).init()
 }
 
-/// Initializes the global logger with a SimpleLogger instance with
-/// `max_log_level` set to a specific log level as well as specific log targets.
-///
-/// ```
-/// simple_logger::init_with_level_and_targets(log::Level::Info, &["wrong_target"]).unwrap();
-///
-/// log::info!("This will NOT be logged. (Wrong target)");
-/// ```
-pub fn init_with_level_and_targets(level: Level, targets: &[&str]) -> Result<(), SetLoggerError> {
-    #[cfg(all(windows, feature = "colored"))]
-    set_up_color_terminal();
-
-    let logger = SimpleLogger {
-        level,
-        whitelisted_targets: targets.iter().map(|s| s.to_string()).collect(),
-    };
-    log::set_boxed_logger(Box::new(logger))?;
-    log::set_max_level(level.to_level_filter());
-    Ok(())
-}
-
-/// Initializes the global logger with a SimpleLogger instance with
-/// `max_log_level` set to `LogLevel::Trace`.
-///
-/// ```
-/// simple_logger::init().unwrap();
-/// log::warn!("This is an example message.");
-/// ```
+/// See [this](struct.SimpleLogger.html#method.new)
 pub fn init() -> Result<(), SetLoggerError> {
-    init_with_level(Level::Trace)
+    SimpleLogger::new().init()
 }
 
-/// A macro for simulating env_logger behavior, which enables the user to choose log level by
-/// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
-/// recognized as one of the log levels, this function with use the `Error` level by default.
-/// ```
-/// simple_logger::init_by_env();
-/// log::warn!("This is an example message.");
-/// ```
+/// See [this](struct.SimpleLogger.html#method.from_env)
 pub fn init_by_env() {
-    match std::env::var("RUST_LOG") {
-        Ok(x) => match x.to_lowercase().as_str() {
-            "trace" => init_with_level(log::Level::Trace).unwrap(),
-            "debug" => init_with_level(log::Level::Debug).unwrap(),
-            "info" => init_with_level(log::Level::Info).unwrap(),
-            "warn" => init_with_level(log::Level::Warn).unwrap(),
-            _ => init_with_level(log::Level::Error).unwrap(),
-        },
-        _ => init_with_level(log::Level::Error).unwrap(),
-    }
+    SimpleLogger::from_env().init().unwrap()
 }
