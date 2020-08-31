@@ -201,6 +201,10 @@ fn set_up_color_terminal() {
 }
 
 /// See [this](struct.SimpleLogger.html#method.with_level)
+#[deprecated(
+since = "1.8.0",
+note = "Please use the Builder pattern instead."
+)]
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
     SimpleLogger::new()
         .with_level(level.to_level_filter())
@@ -208,11 +212,19 @@ pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
 }
 
 /// See [this](struct.SimpleLogger.html#method.new)
+#[deprecated(
+since = "1.8.0",
+note = "Please use the Builder pattern instead."
+)]
 pub fn init() -> Result<(), SetLoggerError> {
     SimpleLogger::new().init()
 }
 
 /// See [this](struct.SimpleLogger.html#method.from_env)
+#[deprecated(
+since = "1.8.0",
+note = "Please use the Builder pattern instead."
+)]
 pub fn init_by_env() {
     SimpleLogger::from_env().init().unwrap()
 }
