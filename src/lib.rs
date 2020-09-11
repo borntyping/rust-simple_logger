@@ -18,11 +18,17 @@ impl SimpleLogger {
     /// Initializes the global logger with a SimpleLogger instance with
     /// default log level set to `Level::Trace`.
     ///
+    /// You may use the various builder-style methods on this type to configure
+    /// the logger, and you must call [`init`] in order to start logging messages.
+    ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
-    /// SimpleLogger::new();
+    /// SimpleLogger::new().init();
     /// log::warn!("This is an example message.");
     /// ```
+    ///
+    /// [`init`]: #method.init
+    #[must_use = "You must call init() to begin logging"]
     pub fn new() -> SimpleLogger {
         SimpleLogger {
             default_level: LevelFilter::Trace,
@@ -34,11 +40,17 @@ impl SimpleLogger {
     /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
     /// recognized as one of the log levels, this function with use the `Error` level by default.
     ///
+    /// You may use the various builder-style methods on this type to configure
+    /// the logger, and you must call [`init`] in order to start logging messages.
+    ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
-    /// SimpleLogger::from_env();
+    /// SimpleLogger::from_env().init();
     /// log::warn!("This is an example message.");
     /// ```
+    ///
+    /// [`init`]: #method.init
+    #[must_use = "You must call init() to begin logging"]
     pub fn from_env() -> SimpleLogger {
         let level = match std::env::var("RUST_LOG") {
             Ok(x) => match x.to_lowercase().as_str() {
@@ -55,6 +67,7 @@ impl SimpleLogger {
     }
 
     /// Set the 'default' log level.
+    #[must_use = "You must call init() to begin logging"]
     pub fn with_level(mut self, level: LevelFilter) -> SimpleLogger {
         self.default_level = level;
         self
@@ -81,12 +94,14 @@ impl SimpleLogger {
     ///
     /// SimpleLogger::new().with_module_level("something", LevelFilter::Off).init();
     /// ```
+    #[must_use = "You must call init() to begin logging"]
     pub fn with_module_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
         self.module_levels.insert(target.to_string(), level);
         self
     }
 
     /// Override the log level for specific targets.
+    #[must_use = "You must call init() to begin logging"]
     pub fn with_target_levels(
         mut self,
         target_levels: HashMap<String, LevelFilter>,
