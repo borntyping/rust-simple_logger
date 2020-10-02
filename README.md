@@ -7,7 +7,6 @@ The output format is based on the format used by [Supervisord](http://supervisor
 * [Source on GitHub](https://github.com/borntyping/rust-simple_logger)
 * [Packages on Crates.io](https://crates.io/crates/simple_logger)
 * [Documentation on Docs.rs](https://docs.rs/simple_logger)
-* [Builds on Travis CI](https://travis-ci.org/borntyping/rust-simple_logger)
 
 Usage
 -----
