@@ -125,6 +125,10 @@ impl SimpleLogger {
 
     /// Override the log level for specific targets.
     #[must_use = "You must call init() to begin logging"]
+    #[deprecated(
+        since = "1.11.0",
+        note = "This is a leftover from before there was the builder pattern. Use [`with_module_level`](#method.with_module_level) instead."
+    )]
     pub fn with_target_levels(
         mut self,
         target_levels: HashMap<String, LevelFilter>,
