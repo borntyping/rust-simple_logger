@@ -10,8 +10,12 @@ use std::collections::HashMap;
 pub struct SimpleLogger {
     /// The default logging level
     default_level: LevelFilter,
-    /// The specific logging level for each modules
-    module_levels: HashMap<String, LevelFilter>,
+    /// The specific logging level for each module
+    ///
+    /// This is used to override the default value for some specific modules.
+    /// After initialization, the vector is sorted so that the first (prefix) match
+    /// directly gives us the desired log level.
+    module_levels: Vec<(String, LevelFilter)>,
 }
 
 impl SimpleLogger {
@@ -23,7 +27,7 @@ impl SimpleLogger {
     ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
-    /// SimpleLogger::new().init();
+    /// SimpleLogger::new().init().unwrap();
     /// log::warn!("This is an example message.");
     /// ```
     ///
@@ -32,7 +36,7 @@ impl SimpleLogger {
     pub fn new() -> SimpleLogger {
         SimpleLogger {
             default_level: LevelFilter::Trace,
-            module_levels: HashMap::new(),
+            module_levels: Vec::new(),
         }
     }
 
@@ -45,7 +49,7 @@ impl SimpleLogger {
     ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
-    /// SimpleLogger::from_env().init();
+    /// SimpleLogger::from_env().init().unwrap();
     /// log::warn!("This is an example message.");
     /// ```
     ///
@@ -67,56 +71,95 @@ impl SimpleLogger {
     }
 
     /// Set the 'default' log level.
+    ///
+    /// You can override the default level for specific modules and their sub-modules using [`with_module_level`]
+    ///
+    /// [`with_module_level`]: #method.with_module_level
     #[must_use = "You must call init() to begin logging"]
     pub fn with_level(mut self, level: LevelFilter) -> SimpleLogger {
         self.default_level = level;
         self
     }
 
-    /// Override the log level for specific module.
+    /// Override the log level for some specific modules.
+    ///
+    /// This sets the log level of a specific module and all its sub-modules.
+    /// When both the level for a parent module as well as a child module are set,
+    /// the more specific value is taken. If the log level for the same module is
+    /// specified twice, the resulting log level is implementation defined.
     ///
     /// # Examples
     ///
-    /// Change log level for specific crate:
+    /// Silence an overly verbose crate:
     ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
     /// use log::LevelFilter;
     ///
-    /// SimpleLogger::new().with_module_level("something", LevelFilter::Warn).init();
+    /// SimpleLogger::new().with_module_level("chatty_dependency", LevelFilter::Warn).init().unwrap();
     /// ```
     ///
-    /// Disable logging for specific crate:
+    /// Disable logging for all dependencies:
     ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
     /// use log::LevelFilter;
     ///
-    /// SimpleLogger::new().with_module_level("something", LevelFilter::Off).init();
+    /// SimpleLogger::new()
+    ///     .with_level(LevelFilter::Off)
+    ///     .with_module_level("my_crate", LevelFilter::Info)
+    ///     .init()
+    ///     .unwrap();
     /// ```
     #[must_use = "You must call init() to begin logging"]
     pub fn with_module_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
-        self.module_levels.insert(target.to_string(), level);
+        self.module_levels.push((target.to_string(), level));
+
+        /* Normally this is only called in `init` to avoid redundancy, but we can't initialize the logger in tests */
+        #[cfg(test)]
+        self.module_levels
+            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
+
         self
     }
 
     /// Override the log level for specific targets.
     #[must_use = "You must call init() to begin logging"]
+    #[deprecated(
+        since = "1.11.0",
+        note = "This is a leftover from before there was the builder pattern. Use [`with_module_level`](#method.with_module_level) instead."
+    )]
     pub fn with_target_levels(
         mut self,
         target_levels: HashMap<String, LevelFilter>,
     ) -> SimpleLogger {
-        self.module_levels = target_levels;
+        self.module_levels = target_levels.into_iter().collect();
+
+        /* Normally this is only called in `init` to avoid redundancy, but we can't initialize the logger in tests */
+        #[cfg(test)]
+        self.module_levels
+            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
+
         self
     }
 
     /// 'Init' the actual logger, instantiate it and configure it,
     /// this method MUST be called in order for the logger to be effective.
-    pub fn init(self) -> Result<(), SetLoggerError> {
+    pub fn init(mut self) -> Result<(), SetLoggerError> {
         #[cfg(all(windows, feature = "colored"))]
         set_up_color_terminal();
 
-        let max_level = self.module_levels.values().copied().max();
+        /* Sort all module levels from most specific to least specific. The length of the module
+         * name is used instead of its actual depth to avoid module name parsing.
+         */
+        self.module_levels
+            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
+        let max_level = self
+            .module_levels
+            .iter()
+            .map(|(_name, level)| level)
+            .copied()
+            .max();
         let max_level = max_level
             .map(|lvl| lvl.max(self.default_level))
             .unwrap_or(self.default_level);
@@ -135,12 +178,16 @@ impl Default for SimpleLogger {
 
 impl Log for SimpleLogger {
     fn enabled(&self, metadata: &Metadata) -> bool {
-        metadata.level().to_level_filter()
+        &metadata.level().to_level_filter()
             <= self
                 .module_levels
-                .get(metadata.target())
-                .copied()
-                .unwrap_or_else(|| self.default_level)
+                .iter()
+                /* At this point the Vec is already sorted so that we can simply take
+                 * the first match
+                 */
+                .find(|(name, _level)| metadata.target().starts_with(name))
+                .map(|(_name, level)| level)
+                .unwrap_or(&self.default_level)
     }
 
     fn log(&self, record: &Record) {
@@ -233,4 +280,48 @@ pub fn init() -> Result<(), SetLoggerError> {
 #[deprecated(since = "1.8.0", note = "Please use the Builder pattern instead.")]
 pub fn init_by_env() {
     SimpleLogger::from_env().init().unwrap()
+}
+
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_module_levels_allowlist() {
+        let logger = SimpleLogger::new()
+            .with_level(LevelFilter::Off)
+            .with_module_level("my_crate", LevelFilter::Info);
+
+        assert!(logger.enabled(&create_log("my_crate", Level::Info)));
+        assert!(logger.enabled(&create_log("my_crate::module", Level::Info)));
+        assert!(!logger.enabled(&create_log("my_crate::module", Level::Debug)));
+        assert!(!logger.enabled(&create_log("not_my_crate", Level::Debug)));
+        assert!(!logger.enabled(&create_log("not_my_crate::module", Level::Error)));
+    }
+
+    #[test]
+    fn test_module_levels_denylist() {
+        let logger = SimpleLogger::new()
+            .with_level(LevelFilter::Debug)
+            .with_module_level("my_crate", LevelFilter::Trace)
+            .with_module_level("chatty_dependency", LevelFilter::Info);
+
+        assert!(logger.enabled(&create_log("my_crate", Level::Info)));
+        assert!(logger.enabled(&create_log("my_crate", Level::Trace)));
+        assert!(logger.enabled(&create_log("my_crate::module", Level::Info)));
+        assert!(logger.enabled(&create_log("my_crate::module", Level::Trace)));
+        assert!(logger.enabled(&create_log("not_my_crate", Level::Debug)));
+        assert!(!logger.enabled(&create_log("not_my_crate::module", Level::Trace)));
+        assert!(logger.enabled(&create_log("chatty_dependency", Level::Info)));
+        assert!(!logger.enabled(&create_log("chatty_dependency", Level::Debug)));
+        assert!(!logger.enabled(&create_log("chatty_dependency::module", Level::Debug)));
+        assert!(logger.enabled(&create_log("chatty_dependency::module", Level::Warn)));
+    }
+
+    fn create_log(name: &str, level: Level) -> Metadata {
+        let mut builder = Metadata::builder();
+        builder.level(level);
+        builder.target(name);
+        builder.build()
+    }
 }
