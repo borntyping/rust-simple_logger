@@ -85,10 +85,10 @@ impl SimpleLogger {
                 "error" => log::LevelFilter::Error,
                 _ => default_level,
             },
-            _ => default,
+            _ => default_level,
         };
 
-        SimpleLogger::new().with_level(default_level)
+        SimpleLogger::new().with_level(level)
     }
 
     /// Set the 'default' log level.
