@@ -40,9 +40,9 @@ impl SimpleLogger {
         }
     }
 
-    /// A macro for simulating env_logger behavior, which enables the user to choose log level by
+    /// Simulates env_logger behavior, which enables the user to choose log level by
     /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
-    /// recognized as one of the log levels, this function with use the `Error` level by default.
+    /// recognized as one of the log levels, this function will use the `Error` level by default.
     ///
     /// You may use the various builder-style methods on this type to configure
     /// the logger, and you must call [`init`] in order to start logging messages.
@@ -56,18 +56,39 @@ impl SimpleLogger {
     /// [`init`]: #method.init
     #[must_use = "You must call init() to begin logging"]
     pub fn from_env() -> SimpleLogger {
+        Self::from_env_or(log::LevelFilter::Error)
+    }
+
+    /// Simulates env_logger behavior, which enables the user to choose log level by
+    /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
+    /// recognized as one of the log levels, this function will use the level in the argument.
+    ///
+    /// You may use the various builder-style methods on this type to configure
+    /// the logger, and you must call [`init`] in order to start logging messages.
+    ///
+    /// ```no_run
+    /// use simple_logger::SimpleLogger;
+    /// use log::LevelFilter;
+    /// SimpleLogger::from_env_or(LevelFilter::Info).init().unwrap();
+    /// log::info!("This is an example message.");
+    /// ```
+    ///
+    /// [`init`]: #method.init
+    #[must_use = "You must call init() to begin logging"]
+    pub fn from_env_or(default_level: LevelFilter) -> SimpleLogger {
         let level = match std::env::var("RUST_LOG") {
             Ok(x) => match x.to_lowercase().as_str() {
                 "trace" => log::LevelFilter::Trace,
                 "debug" => log::LevelFilter::Debug,
                 "info" => log::LevelFilter::Info,
                 "warn" => log::LevelFilter::Warn,
-                _ => log::LevelFilter::Error,
+                "error" => log::LevelFilter::Error,
+                _ => default_level,
             },
-            _ => log::LevelFilter::Error,
+            _ => default,
         };
 
-        SimpleLogger::new().with_level(level)
+        SimpleLogger::new().with_level(default_level)
     }
 
     /// Set the 'default' log level.
