@@ -277,21 +277,39 @@ fn set_up_color_terminal() {
     }
 }
 
-/// See [`SimpleLogger::with_level`]
-pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    SimpleLogger::new()
-        .with_level(level.to_level_filter())
-        .init()
-}
 
-/// See [`SimpleLogger::new`]
+/// Initialise the logger with it's default configuration.
+///
+/// Log messages will not be filtered.
+/// The `RUST_LOG` environment variable is not used.
 pub fn init() -> Result<(), SetLoggerError> {
     SimpleLogger::new().init()
 }
 
-/// See [`SimpleLogger::from_env`]
+/// Initialise the logger with the `RUST_LOG` environment variable.
+///
+/// Log messages will be filtered based on the `RUST_LOG` environment variable.
+pub fn init_with_env() -> Result<(), SetLoggerError> {
+    SimpleLogger::new().env().init()
+}
+
+/// Initialise the logger with a specific log level.
+///
+/// Log messages below the given [`Level`] will be filtered.
+/// The `RUST_LOG` environment variable is not used.
+pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
+    SimpleLogger::new().with_level(level.to_level_filter()).init()
+}
+
+/// Use [`init_with_env`] instead.
+///
+/// This does the same as [`init_with_env`] but unwraps the result.
+#[deprecated(
+    since = "1.12.0",
+    note = "Use [`init_with_env`] instead, which does not unwrap the result."
+)]
 pub fn init_by_env() {
-    SimpleLogger::from_env().init().unwrap()
+    init_with_env().unwrap()
 }
 
 #[cfg(test)]
