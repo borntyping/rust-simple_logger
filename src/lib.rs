@@ -322,7 +322,7 @@ impl Log for SimpleLogger {
     fn flush(&self) {}
 }
 
-#[cfg(windows)]
+#[cfg(all(windows, feature = "colored"))]
 fn set_up_color_terminal() {
     use atty::Stream;
 
