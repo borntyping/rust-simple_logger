@@ -276,17 +276,25 @@ impl Log for SimpleLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let mut level_string = record.level().to_string();
-
-            #[cfg(feature = "colored")]
-            if self.colors {
-                match record.level() {
-                    Level::Error => level_string = level_string.red().to_string(),
-                    Level::Warn => level_string = level_string.yellow().to_string(),
-                    Level::Info => level_string = level_string.cyan().to_string(),
-                    Level::Debug => level_string = level_string.purple().to_string(),
-                    Level::Trace => level_string = level_string.normal().to_string(),
-                };
+            let level_string = {
+                #[cfg(feature = "colored")]
+                {
+                    if self.colors {
+                        match record.level() {
+                            Level::Error => record.level().to_string().red().to_string(),
+                            Level::Warn => record.level().to_string().yellow().to_string(),
+                            Level::Info => record.level().to_string().cyan().to_string(),
+                            Level::Debug => record.level().to_string().purple().to_string(),
+                            Level::Trace => record.level().to_string().normal().to_string(),
+                        }
+                    } else {
+                        record.level().to_string()
+                    }
+                }
+                #[cfg(not(feature = "colored"))]
+                {
+                    record.level().to_string()
+                }
             };
 
             let target = if !record.target().is_empty() {
