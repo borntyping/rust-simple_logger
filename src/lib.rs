@@ -27,6 +27,12 @@ pub struct SimpleLogger {
     /// This field is only available if the `chrono` feature is enabled.
     #[cfg(feature = "chrono")]
     timestamps: bool,
+
+    /// Whether to use color output or not.
+    ///
+    /// This field is only available if the `color` feature is enabled.
+    #[cfg(feature = "colored")]
+    colors: bool,
 }
 
 impl SimpleLogger {
@@ -48,6 +54,9 @@ impl SimpleLogger {
 
             #[cfg(feature = "chrono")]
             timestamps: true,
+
+            #[cfg(feature = "colored")]
+            colors: true,
         }
     }
 
@@ -172,11 +181,21 @@ impl SimpleLogger {
 
     /// Control whether timestamps are printed or not.
     ///
-    /// This field is only available if the `chrono` feature is enabled.
+    /// This method is only available if the `chrono` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "chrono")]
     pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
         self.timestamps = timestamps;
+        self
+    }
+
+    /// Control whether messages are colored or not.
+    ///
+    /// This method is only available if the `colored` feature is enabled.
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "chrono")]
+    pub fn with_colors(mut self, colors: bool) -> SimpleLogger {
+        self.colors = colors;
         self
     }
 
@@ -229,27 +248,25 @@ impl Log for SimpleLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
-            let level_string = {
-                #[cfg(feature = "colored")]
-                {
-                    match record.level() {
-                        Level::Error => record.level().to_string().red(),
-                        Level::Warn => record.level().to_string().yellow(),
-                        Level::Info => record.level().to_string().cyan(),
-                        Level::Debug => record.level().to_string().purple(),
-                        Level::Trace => record.level().to_string().normal(),
-                    }
-                }
-                #[cfg(not(feature = "colored"))]
-                {
-                    record.level().to_string()
-                }
+            let mut level_string = record.level().to_string();
+
+            #[cfg(feature = "colored")]
+            if self.colors {
+                match record.level() {
+                    Level::Error => level_string = level_string.red().to_string(),
+                    Level::Warn => level_string = level_string.yellow().to_string(),
+                    Level::Info => level_string = level_string.cyan().to_string(),
+                    Level::Debug => level_string = level_string.purple().to_string(),
+                    Level::Trace => level_string = level_string.normal().to_string(),
+                };
             };
+
             let target = if !record.target().is_empty() {
                 record.target()
             } else {
                 record.module_path().unwrap_or_default()
             };
+
             #[cfg(feature = "chrono")]
             if self.timestamps {
                 println!(
@@ -261,6 +278,7 @@ impl Log for SimpleLogger {
                 );
                 return;
             }
+
             println!("{:<5} [{}] {}", level_string, target, record.args());
         }
     }
@@ -377,6 +395,18 @@ mod test {
 
         builder = builder.with_timestamps(false);
         assert!(builder.timestamps == false);
+
+        builder.init().unwrap();
+    }
+
+    #[test]
+    #[cfg(feature = "color")]
+    fn test_with_timestamps() {
+        let mut builder = SimpleLogger::new();
+        assert!(builder.color == true);
+
+        builder = builder.with_colors(false);
+        assert!(builder.color == false);
 
         builder.init().unwrap();
     }
