@@ -33,23 +33,24 @@ You can run the above example with:
 cargo run --example init
 ```
 
-If you want to remove the colorized output and the timestamps with its respective dependencies, add the
-the following to your Cargo.toml:
+Coloured output and timestamps will be enabled by default. You can remove these
+features and their respective dependencies by disabling all features in your 
+`Cargo.toml`.
 
 ```
 [dependencies.simple_logger]
 default-features = false
 ```
 
-Or to remove only the colorized output but keep the timestamps:
+To include the `timestamps` feature, but not the `color` feature:
 
 ```
 [dependencies.simple_logger]
 default-features = false
-features = ["ts"]
+features = ["timestamps"]
 ```
 
-Or to remove only the timestamps but keep the colorized output:
+To include the `color` feature, but not the `timestamps` feature:
 
 ```
 [dependencies.simple_logger]

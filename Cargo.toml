@@ -10,7 +10,7 @@ edition = "2018"
 [features]
 default = ["colored", "chrono"]
 color = ["colored"]
-ts = ["chrono"]
+timestamps = ["chrono"]
 
 [dependencies]
 log = { version = "^0.4.5", features = ["std"] }
