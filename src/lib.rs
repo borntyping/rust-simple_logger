@@ -71,16 +71,15 @@ impl SimpleLogger {
     /// [`with_level`]: #method.with_level
     #[must_use = "You must call init() to begin logging"]
     pub fn env(mut self) -> SimpleLogger {
-        let level = match std::env::var("RUST_LOG") {
-            Ok(x) => match x.to_lowercase().as_str() {
+        if let Ok(level) = std::env::var("RUST_LOG") {
+            match level.to_lowercase().as_str() {
                 "trace" => self.default_level = log::LevelFilter::Trace,
                 "debug" => self.default_level = log::LevelFilter::Debug,
                 "info" => self.default_level = log::LevelFilter::Info,
                 "warn" => self.default_level = log::LevelFilter::Warn,
                 "error" => self.default_level = log::LevelFilter::Error,
                 _ => (),
-            },
-            _ => (),
+            }
         };
         self
     }
