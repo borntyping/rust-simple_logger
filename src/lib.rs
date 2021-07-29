@@ -16,6 +16,10 @@ pub struct SimpleLogger {
     /// After initialization, the vector is sorted so that the first (prefix) match
     /// directly gives us the desired log level.
     module_levels: Vec<(String, LevelFilter)>,
+    /// Whether to include timestamps or not
+    ///
+    /// If the `chrono` feature is not enabled, this will not do anything.
+    timestamps:bool
 }
 
 impl SimpleLogger {
@@ -37,6 +41,7 @@ impl SimpleLogger {
         SimpleLogger {
             default_level: LevelFilter::Off,
             module_levels: Vec::new(),
+	    timestamps: true
         }
     }
 
@@ -157,6 +162,15 @@ impl SimpleLogger {
         self
     }
 
+    /// Control whether timestamps are printed or not.
+    ///
+    /// Timestamps will be printed by default if the `chrono` feature is enabled.
+    #[must_use = "You must call init() to begin logging"]
+    pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
+        self.timestamps = timestamps;
+        self
+    }
+
     /// 'Init' the actual logger, instantiate it and configure it,
     /// this method MUST be called in order for the logger to be effective.
     pub fn init(mut self) -> Result<(), SetLoggerError> {
@@ -228,7 +242,7 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
             #[cfg(feature = "chrono")]
-            {
+            if self.timestamps {
                 println!(
                     "{} {:<5} [{}] {}",
                     Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
@@ -236,11 +250,9 @@ impl Log for SimpleLogger {
                     target,
                     record.args()
                 );
+		return;
             }
-            #[cfg(not(feature = "chrono"))]
-            {
-                println!("{:<5} [{}] {}", level_string, target, record.args());
-            }
+	    println!("{:<5} [{}] {}", level_string, target, record.args());
         }
     }
 
