@@ -39,7 +39,7 @@ impl SimpleLogger {
     #[must_use = "You must call init() to begin logging"]
     pub fn new() -> SimpleLogger {
         SimpleLogger {
-            default_level: LevelFilter::Off,
+            default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
 	    timestamps: true
         }
