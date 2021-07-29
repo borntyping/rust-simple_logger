@@ -10,16 +10,19 @@ use std::collections::HashMap;
 pub struct SimpleLogger {
     /// The default logging level
     default_level: LevelFilter,
+
     /// The specific logging level for each module
     ///
     /// This is used to override the default value for some specific modules.
     /// After initialization, the vector is sorted so that the first (prefix) match
     /// directly gives us the desired log level.
     module_levels: Vec<(String, LevelFilter)>,
+
     /// Whether to include timestamps or not
     ///
-    /// If the `chrono` feature is not enabled, this will not do anything.
-    timestamps:bool
+    /// This field is only available if the `chrono` feature is enabled.
+    #[cfg(feature = "chrono")]
+    timestamps: bool,
 }
 
 impl SimpleLogger {
@@ -41,7 +44,9 @@ impl SimpleLogger {
         SimpleLogger {
             default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
-	    timestamps: true
+
+            #[cfg(feature = "chrono")]
+            timestamps: true,
         }
     }
 
@@ -65,7 +70,9 @@ impl SimpleLogger {
         note = "Use [`env`](#method.env) instead. This predates use of the builder pattern in this library."
     )]
     pub fn from_env() -> SimpleLogger {
-        SimpleLogger::new().with_level(log::LevelFilter::Error).env()
+        SimpleLogger::new()
+            .with_level(log::LevelFilter::Error)
+            .env()
     }
 
     /// Simulates env_logger behavior, which enables the user to choose log
@@ -164,8 +171,9 @@ impl SimpleLogger {
 
     /// Control whether timestamps are printed or not.
     ///
-    /// Timestamps will be printed by default if the `chrono` feature is enabled.
+    /// This field is only available if the `chrono` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "chrono")]
     pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
         self.timestamps = timestamps;
         self
@@ -250,9 +258,9 @@ impl Log for SimpleLogger {
                     target,
                     record.args()
                 );
-		return;
+                return;
             }
-	    println!("{:<5} [{}] {}", level_string, target, record.args());
+            println!("{:<5} [{}] {}", level_string, target, record.args());
         }
     }
 
@@ -288,7 +296,6 @@ fn set_up_color_terminal() {
     }
 }
 
-
 /// Initialise the logger with it's default configuration.
 ///
 /// Log messages will not be filtered.
@@ -309,7 +316,9 @@ pub fn init_with_env() -> Result<(), SetLoggerError> {
 /// Log messages below the given [`Level`] will be filtered.
 /// The `RUST_LOG` environment variable is not used.
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    SimpleLogger::new().with_level(level.to_level_filter()).init()
+    SimpleLogger::new()
+        .with_level(level.to_level_filter())
+        .init()
 }
 
 /// Use [`init_with_env`] instead.
@@ -357,6 +366,18 @@ mod test {
         assert!(!logger.enabled(&create_log("chatty_dependency", Level::Debug)));
         assert!(!logger.enabled(&create_log("chatty_dependency::module", Level::Debug)));
         assert!(logger.enabled(&create_log("chatty_dependency::module", Level::Warn)));
+    }
+
+    #[test]
+    #[cfg(feature = "chrono")]
+    fn test_with_timestamps() {
+        let mut builder = SimpleLogger::new();
+        assert!(builder.timestamps == true);
+
+        builder = builder.with_timestamps(false);
+        assert!(builder.timestamps == false);
+
+        builder.init().unwrap();
     }
 
     fn create_log(name: &str, level: Level) -> Metadata {
