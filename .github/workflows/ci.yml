@@ -31,7 +31,6 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    # We don't want unstable jobs to fail our cicd
     continue-on-error: ${{ matrix.toolchain != 'stable' }}
 
     strategy:
@@ -53,11 +52,13 @@ jobs:
       - run: cargo +${{ matrix.toolchain }} test --workspace --no-run
       - run: cargo +${{ matrix.toolchain }} test --workspace
 
+      - run: cargo +${{ matrix.toolchain }} build  --no-default-features --workspace
+      - run: cargo +${{ matrix.toolchain }} test  --no-default-features --workspace --no-run
+      - run: cargo +${{ matrix.toolchain }} test  --no-default-features --workspace
+
   rust-publish-crates:
-    # Publishing goes when we create a new git tag on the repo
     if: startsWith(github.ref, 'refs/tags/')
     runs-on: ubuntu-latest
-    # XXX: this job must execute only if all checks pass!
     needs:
       - rust-lint
       - rust-test
