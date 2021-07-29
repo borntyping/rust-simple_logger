@@ -1,4 +1,4 @@
-//! A logger that prints all messages with a readable output format.
+//! A logger that prints all messages with a simple, readable output format.
 
 #[cfg(feature = "chrono")]
 use chrono::Local;
@@ -7,6 +7,10 @@ use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
 
+/// Implements [`Log`] and a set of simple builder methods for configuration.
+///
+/// Use the various "builder" methods on this struct to configure the logger,
+/// then call [`init`] to configure the [`log`] crate.
 pub struct SimpleLogger {
     /// The default logging level
     default_level: LevelFilter,
@@ -28,9 +32,6 @@ pub struct SimpleLogger {
 impl SimpleLogger {
     /// Initializes the global logger with a SimpleLogger instance with
     /// default log level set to `Level::Trace`.
-    ///
-    /// You may use the various builder-style methods on this type to configure
-    /// the logger, and you must call [`init`] in order to start logging messages.
     ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
