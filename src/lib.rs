@@ -1,4 +1,32 @@
 //! A logger that prints all messages with a simple, readable output format.
+//!
+//! Optional features include timestamps and colored output.
+//!
+//! ```
+//! simple_logger::SimpleLogger::new().env().init().unwrap();
+//!
+//! log::warn!("This is an example message.");
+//! ```
+//!
+//! Some shortcuts are available for common use cases.
+//!
+//! Just initialize logging without any configuration:
+//!
+//! ```
+//! simple_logger::init().unwrap();
+//! ```
+//!
+//! Set the log level from the `RUST_LOG` environment variable:
+//!
+//! ```
+//! simple_logger::init_with_env().unwrap();
+//! ```
+//!
+//! Hardcode a default log level:
+//!
+//! ```
+//! simple_logger::init_with_level(log::Level::Warn).unwrap();
+//! ```
 
 #[cfg(feature = "chrono")]
 use chrono::Local;
@@ -41,7 +69,7 @@ impl SimpleLogger {
     ///
     /// ```no_run
     /// use simple_logger::SimpleLogger;
-    /// SimpleLogger::new().init().unwrap();
+    /// SimpleLogger::new().env().init().unwrap();
     /// log::warn!("This is an example message.");
     /// ```
     ///
@@ -77,7 +105,7 @@ impl SimpleLogger {
     #[must_use = "You must call init() to begin logging"]
     #[deprecated(
         since = "1.12.0",
-        note = "Use [`env`](#method.env) instead. This predates use of the builder pattern in this library."
+        note = "Use [`env`](#method.env) instead. Will be removed in version 2.0.0."
     )]
     pub fn from_env() -> SimpleLogger {
         SimpleLogger::new()
@@ -163,7 +191,7 @@ impl SimpleLogger {
     #[must_use = "You must call init() to begin logging"]
     #[deprecated(
         since = "1.11.0",
-        note = "This is a leftover from before there was the builder pattern. Use [`with_module_level`](#method.with_module_level) instead."
+        note = "Use [`with_module_level`](#method.with_module_level) instead. Will be removed in version 2.0.0."
     )]
     pub fn with_target_levels(
         mut self,
@@ -345,7 +373,7 @@ pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
 /// This does the same as [`init_with_env`] but unwraps the result.
 #[deprecated(
     since = "1.12.0",
-    note = "Use [`init_with_env`] instead, which does not unwrap the result."
+    note = "Use [`init_with_env`] instead, which does not unwrap the result. Will be removed in version 2.0.0."
 )]
 pub fn init_by_env() {
     init_with_env().unwrap()
