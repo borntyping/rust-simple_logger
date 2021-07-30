@@ -9,7 +9,7 @@ edition = "2018"
 
 [features]
 default = ["colored", "chrono"]
-color = ["colored"]
+colors = ["colored"]
 timestamps = ["chrono"]
 
 [dependencies]

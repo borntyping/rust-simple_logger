@@ -436,7 +436,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "color")]
+    #[cfg(feature = "colored")]
     fn test_with_colors() {
         let mut builder = SimpleLogger::new();
         assert!(builder.colors == true);

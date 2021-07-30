@@ -34,7 +34,7 @@ cargo run --example init
 ```
 
 Coloured output and timestamps will be enabled by default. You can remove these
-features and their respective dependencies by disabling all features in your 
+features and their respective dependencies by disabling all features in your
 `Cargo.toml`.
 
 ```
@@ -42,7 +42,7 @@ features and their respective dependencies by disabling all features in your
 default-features = false
 ```
 
-To include the `timestamps` feature, but not the `color` feature:
+To include the `timestamps` feature, but not the `colors` feature:
 
 ```
 [dependencies.simple_logger]
@@ -50,12 +50,12 @@ default-features = false
 features = ["timestamps"]
 ```
 
-To include the `color` feature, but not the `timestamps` feature:
+To include the `colors` feature, but not the `timestamps` feature:
 
 ```
 [dependencies.simple_logger]
 default-features = false
-features = ["color"]
+features = ["colors"]
 ```
 
 Licence
