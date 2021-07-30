@@ -221,7 +221,7 @@ impl SimpleLogger {
     ///
     /// This method is only available if the `colored` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "colored")]
     pub fn with_colors(mut self, colors: bool) -> SimpleLogger {
         self.colors = colors;
         self
