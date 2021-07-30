@@ -437,12 +437,12 @@ mod test {
 
     #[test]
     #[cfg(feature = "color")]
-    fn test_with_timestamps() {
+    fn test_with_colors() {
         let mut builder = SimpleLogger::new();
-        assert!(builder.color == true);
+        assert!(builder.colors == true);
 
         builder = builder.with_colors(false);
-        assert!(builder.color == false);
+        assert!(builder.colors == false);
 
         builder.init().unwrap();
     }
