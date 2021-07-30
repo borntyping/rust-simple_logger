@@ -48,13 +48,10 @@ jobs:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
 
-      - run: cargo +${{ matrix.toolchain }} build --workspace
-      - run: cargo +${{ matrix.toolchain }} test --workspace --no-run
-      - run: cargo +${{ matrix.toolchain }} test --workspace
-
-      - run: cargo +${{ matrix.toolchain }} build  --no-default-features --workspace
-      - run: cargo +${{ matrix.toolchain }} test  --no-default-features --workspace --no-run
-      - run: cargo +${{ matrix.toolchain }} test  --no-default-features --workspace
+      - run: cargo +${{ matrix.toolchain }} test --all-features
+      - run: cargo +${{ matrix.toolchain }} test --no-default-features
+      - run: cargo +${{ matrix.toolchain }} test --no-default-features --features colors
+      - run: cargo +${{ matrix.toolchain }} test --no-default-features --features timestamps
 
   rust-publish-crates:
     if: startsWith(github.ref, 'refs/tags/')
