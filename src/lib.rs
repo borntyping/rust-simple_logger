@@ -431,8 +431,6 @@ mod test {
 
         builder = builder.with_timestamps(false);
         assert!(builder.timestamps == false);
-
-        builder.init().unwrap();
     }
 
     #[test]
@@ -443,8 +441,6 @@ mod test {
 
         builder = builder.with_colors(false);
         assert!(builder.colors == false);
-
-        builder.init().unwrap();
     }
 
     fn create_log(name: &str, level: Level) -> Metadata {
