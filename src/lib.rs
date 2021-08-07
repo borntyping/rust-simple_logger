@@ -1,6 +1,6 @@
 //! A logger that prints all messages with a simple, readable output format.
 //!
-//! Optional features include timestamps and colored output.
+//! Optional features include timestamps, colored output and logging to stderr.
 //!
 //! ```
 //! simple_logger::SimpleLogger::new().env().init().unwrap();

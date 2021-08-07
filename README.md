@@ -58,6 +58,15 @@ default-features = false
 features = ["colors"]
 ```
 
+To direct logging output to `stderr` use the `stderr` feature:
+
+```
+[dependencies.simple_logger]
+features = ["stderr"]
+```
+
+This can be combined with any other feature.
+
 Licence
 -------
 
