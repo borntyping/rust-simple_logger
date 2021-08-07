@@ -305,7 +305,16 @@ impl Log for SimpleLogger {
 
             #[cfg(feature = "chrono")]
             if self.timestamps {
+                #[cfg(not(feature = "stderr"))]
                 println!(
+                    "{} {:<5} [{}] {}",
+                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
+                    level_string,
+                    target,
+                    record.args()
+                );
+                #[cfg(feature = "stderr")]
+                eprintln!(
                     "{} {:<5} [{}] {}",
                     Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     level_string,
@@ -315,7 +324,10 @@ impl Log for SimpleLogger {
                 return;
             }
 
+            #[cfg(not(feature = "stderr"))]
             println!("{:<5} [{}] {}", level_string, target, record.args());
+            #[cfg(feature = "stderr")]
+            eprintln!("{:<5} [{}] {}", level_string, target, record.args());
         }
     }
 
