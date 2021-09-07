@@ -58,6 +58,13 @@ default-features = false
 features = ["colors"]
 ```
 
+To include the name of the thread logging enable the `threadid` feature:
+
+```
+[dependencies.simple_logger]
+features = ["threadid"]
+```
+
 To direct logging output to `stderr` use the `stderr` feature:
 
 ```

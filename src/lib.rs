@@ -61,6 +61,12 @@ pub struct SimpleLogger {
     /// This field is only available if the `color` feature is enabled.
     #[cfg(feature = "colored")]
     colors: bool,
+
+    /// Whether to use thead identifiers or not.
+    ///
+    /// This field is only available if the `threadid` feature is enabled.
+    #[cfg(feature = "threadid")]
+    threadids: bool,
 }
 
 impl SimpleLogger {
@@ -85,6 +91,9 @@ impl SimpleLogger {
 
             #[cfg(feature = "colored")]
             colors: true,
+
+            #[cfg(feature = "threadid")]
+            threadids: true,
         }
     }
 
@@ -227,6 +236,16 @@ impl SimpleLogger {
         self
     }
 
+    /// Control whether messages include the thread id or not.
+    ///
+    /// This method is only available if the `threadid` feature is enabled.
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "threadid")]
+    pub fn with_threadids(mut self, threadids: bool) -> SimpleLogger {
+        self.threadids = threadids;
+        self
+    }
+
     /// 'Init' the actual logger, instantiate it and configure it,
     /// this method MUST be called in order for the logger to be effective.
     pub fn init(mut self) -> Result<(), SetLoggerError> {
@@ -303,21 +322,38 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
 
+            #[cfg(feature = "threadid")]
+            let thread_id = std::thread::current();
+
+            #[cfg(feature = "threadid")]
+            let (target_thread, target_delimiter) = if self.threadids {
+                (thread_id.name().unwrap_or("UNKNOWN"), "@")
+            } else {
+                ("", "")
+            };
+
+            #[cfg(not(feature = "threadid"))]
+            let (target_thread, target_delimiter) = ("", "");
+
             #[cfg(feature = "chrono")]
             if self.timestamps {
                 #[cfg(not(feature = "stderr"))]
                 println!(
-                    "{} {:<5} [{}] {}",
+                    "{} {:<5} [{}{}{}] {}",
                     Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     level_string,
+                    target_thread,
+                    target_delimiter,
                     target,
                     record.args()
                 );
                 #[cfg(feature = "stderr")]
                 eprintln!(
-                    "{} {:<5} [{}] {}",
+                    "{} {:<5} [{}{}{}] {}",
                     Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     level_string,
+                    target_thread,
+                    target_delimiter,
                     target,
                     record.args()
                 );
@@ -325,9 +361,23 @@ impl Log for SimpleLogger {
             }
 
             #[cfg(not(feature = "stderr"))]
-            println!("{:<5} [{}] {}", level_string, target, record.args());
+            println!(
+                "{:<5} [{}{}{}] {}",
+                level_string,
+                target_thread,
+                target_delimiter,
+                target,
+                record.args()
+            );
             #[cfg(feature = "stderr")]
-            eprintln!("{:<5} [{}] {}", level_string, target, record.args());
+            eprintln!(
+                "{:<5} [{}{}{}] {}",
+                level_string,
+                target_thread,
+                target_delimiter,
+                target,
+                record.args()
+            );
         }
     }
 
