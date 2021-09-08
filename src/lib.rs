@@ -359,7 +359,7 @@ impl Log for SimpleLogger {
             };
 
             #[cfg(not(feature = "chrono"))]
-            let timestamp = Field::none();
+            let timestamp = Field::<char>::none();
 
             #[cfg(not(feature = "stderr"))]
             println!(
