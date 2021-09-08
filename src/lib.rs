@@ -35,6 +35,18 @@ use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
 
+macro_rules! LOGGING_FMT {
+    () => {
+        "{ts}{lvl}{tgt}{thr}{msg}"
+    };
+}
+
+// (prefix, suffix)
+const TS_FMT: (&str, &str) = ("", " ");
+const LVL_FMT: (&str, &str) = ("", " ");
+const TGT_FMT: (&str, &str) = ("[", "] ");
+const TRD_FMT: (&str, &str) = ("{", "} ");
+
 /// Implements [`Log`] and a set of simple builder methods for configuration.
 ///
 /// Use the various "builder" methods on this struct to configure the logger,
@@ -300,89 +312,118 @@ impl Log for SimpleLogger {
                 #[cfg(feature = "colored")]
                 {
                     if self.colors {
-                        match record.level() {
-                            Level::Error => record.level().to_string().red().to_string(),
-                            Level::Warn => record.level().to_string().yellow().to_string(),
-                            Level::Info => record.level().to_string().cyan().to_string(),
-                            Level::Debug => record.level().to_string().purple().to_string(),
-                            Level::Trace => record.level().to_string().normal().to_string(),
-                        }
+                        Field::new(
+                            match record.level() {
+                                Level::Error => record.level().to_string().red().to_string(),
+                                Level::Warn => record.level().to_string().yellow().to_string(),
+                                Level::Info => record.level().to_string().cyan().to_string(),
+                                Level::Debug => record.level().to_string().purple().to_string(),
+                                Level::Trace => record.level().to_string().normal().to_string(),
+                            },
+                            LVL_FMT,
+                        )
                     } else {
-                        record.level().to_string()
+                        Field::new(record.level().to_string(), LVL_FMT)
                     }
                 }
                 #[cfg(not(feature = "colored"))]
                 {
-                    record.level().to_string()
+                    Field::new(record.level().to_string(), LVL_FMT)
                 }
             };
 
             let target = if !record.target().is_empty() {
-                record.target()
+                Field::new(record.target(), TGT_FMT)
             } else {
-                record.module_path().unwrap_or_default()
+                Field::new(record.module_path().unwrap_or_default(), TGT_FMT)
             };
 
             #[cfg(feature = "thread_ids")]
             let thread_id = std::thread::current();
 
             #[cfg(feature = "thread_ids")]
-            let (target_thread, target_delimiter) = if self.threadids {
-                (thread_id.name().unwrap_or("UNKNOWN"), "@")
+            let target_thread = if self.threadids {
+                Field::new(thread_id.name().unwrap_or("UNKNOWN"), TRD_FMT)
             } else {
-                ("", "")
+                Field::none()
             };
 
             #[cfg(not(feature = "thread_ids"))]
-            let (target_thread, target_delimiter) = ("", "");
+            let target_thread = "";
 
             #[cfg(feature = "chrono")]
-            if self.timestamps {
-                #[cfg(not(feature = "stderr"))]
-                println!(
-                    "{} {:<5} [{}{}{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
-                    level_string,
-                    target_thread,
-                    target_delimiter,
-                    target,
-                    record.args()
-                );
-                #[cfg(feature = "stderr")]
-                eprintln!(
-                    "{} {:<5} [{}{}{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
-                    level_string,
-                    target_thread,
-                    target_delimiter,
-                    target,
-                    record.args()
-                );
-                return;
-            }
+            let timestamp = if self.timestamps {
+                Field::new(Local::now().format("%Y-%m-%d %H:%M:%S,%3f"), TS_FMT)
+            } else {
+                Field::none()
+            };
+
+            #[cfg(not(feature = "chrono"))]
+            let timestamp = Field::none();
 
             #[cfg(not(feature = "stderr"))]
             println!(
-                "{:<5} [{}{}{}] {}",
-                level_string,
-                target_thread,
-                target_delimiter,
-                target,
-                record.args()
+                LOGGING_FMT!(),
+                ts = timestamp,
+                lvl = level_string,
+                thr = target_thread,
+                tgt = target,
+                msg = record.args()
             );
+
             #[cfg(feature = "stderr")]
             eprintln!(
-                "{:<5} [{}{}{}] {}",
-                level_string,
-                target_thread,
-                target_delimiter,
-                target,
-                record.args()
+                LOGGING_FMT!(),
+                ts = timestamp,
+                lvl = level_string,
+                thr = target_thread,
+                tgt = target,
+                msg = record.args()
             );
         }
     }
 
     fn flush(&self) {}
+}
+
+// implementation detail:
+//  logged fields can be optional and are suppressed when 'None'
+//  For formatting purposes each field has a prefix and a suffix which are
+//  printed around it
+struct Field<T> {
+    entity: Option<T>,
+    prefix: &'static str,
+    suffix: &'static str,
+}
+
+impl<T> Field<T> {
+    fn new(entity: T, around: (&'static str, &'static str)) -> Self {
+        Field {
+            entity: Some(entity),
+            prefix: around.0,
+            suffix: around.1,
+        }
+    }
+
+    fn none() -> Self {
+        Field {
+            entity: None,
+            prefix: "",
+            suffix: "",
+        }
+    }
+}
+
+impl<T> std::fmt::Display for Field<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.entity {
+            Some(x) => write!(f, "{}{}{}", self.prefix, x, self.suffix),
+            None => write!(f, ""),
+        }
+    }
 }
 
 #[cfg(all(windows, feature = "colored"))]
