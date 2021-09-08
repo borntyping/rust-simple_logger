@@ -42,9 +42,11 @@ macro_rules! LOGGING_FMT {
 }
 
 // (prefix, suffix)
+#[cfg(feature = "chrono")]
 const TS_FMT: (&str, &str) = ("", " ");
 const LVL_FMT: (&str, &str) = ("", " ");
 const TGT_FMT: (&str, &str) = ("[", "] ");
+#[cfg(feature = "thread_ids")]
 const TRD_FMT: (&str, &str) = ("{", "} ");
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
