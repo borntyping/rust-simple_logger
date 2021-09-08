@@ -239,7 +239,7 @@ impl SimpleLogger {
     /// Control whether messages include the thread id or not.
     ///
     /// This method is only available if the `thread_ids` feature is enabled.
-    /// Tread ids are disabled by default.
+    /// Thread ids are disabled by default.
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "thread_ids")]
     pub fn with_thread_ids(mut self, threadids: bool) -> SimpleLogger {
