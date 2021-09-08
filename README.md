@@ -58,12 +58,9 @@ default-features = false
 features = ["colors"]
 ```
 
-To include the name of the thread logging enable the `threadid` feature:
-
-```
-[dependencies.simple_logger]
-features = ["threadid"]
-```
+The 'thread_ids' feature lets one log the name/identifier of the thread generating
+a log message. This feature is enabled by default but the the logger won't use it
+unless enabled by the `SimpleLogger::new().with_thread_ids(true)`.
 
 To direct logging output to `stderr` use the `stderr` feature:
 

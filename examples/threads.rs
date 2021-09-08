@@ -1,7 +1,7 @@
 use simple_logger::SimpleLogger;
 
 fn main() {
-    SimpleLogger::new().init().unwrap();
+    SimpleLogger::new().with_thread_ids(true).init().unwrap();
 
     std::thread::spawn(|| {
         log::warn!("Unnamed thread logs here.");

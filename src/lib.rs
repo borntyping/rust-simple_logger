@@ -64,8 +64,8 @@ pub struct SimpleLogger {
 
     /// Whether to use thead identifiers or not.
     ///
-    /// This field is only available if the `threadid` feature is enabled.
-    #[cfg(feature = "threadid")]
+    /// This field is only available if the `thread_ids` feature is enabled.
+    #[cfg(feature = "thread_ids")]
     threadids: bool,
 }
 
@@ -92,8 +92,8 @@ impl SimpleLogger {
             #[cfg(feature = "colored")]
             colors: true,
 
-            #[cfg(feature = "threadid")]
-            threadids: true,
+            #[cfg(feature = "thread_ids")]
+            threadids: false,
         }
     }
 
@@ -238,10 +238,11 @@ impl SimpleLogger {
 
     /// Control whether messages include the thread id or not.
     ///
-    /// This method is only available if the `threadid` feature is enabled.
+    /// This method is only available if the `thread_ids` feature is enabled.
+    /// Tread ids are disabled by default.
     #[must_use = "You must call init() to begin logging"]
-    #[cfg(feature = "threadid")]
-    pub fn with_threadids(mut self, threadids: bool) -> SimpleLogger {
+    #[cfg(feature = "thread_ids")]
+    pub fn with_thread_ids(mut self, threadids: bool) -> SimpleLogger {
         self.threadids = threadids;
         self
     }
@@ -322,17 +323,17 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
 
-            #[cfg(feature = "threadid")]
+            #[cfg(feature = "thread_ids")]
             let thread_id = std::thread::current();
 
-            #[cfg(feature = "threadid")]
+            #[cfg(feature = "thread_ids")]
             let (target_thread, target_delimiter) = if self.threadids {
                 (thread_id.name().unwrap_or("UNKNOWN"), "@")
             } else {
                 ("", "")
             };
 
-            #[cfg(not(feature = "threadid"))]
+            #[cfg(not(feature = "thread_ids"))]
             let (target_thread, target_delimiter) = ("", "");
 
             #[cfg(feature = "chrono")]

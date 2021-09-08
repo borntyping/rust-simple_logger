@@ -8,11 +8,11 @@ repository = "https://github.com/borntyping/rust-simple_logger"
 edition = "2018"
 
 [features]
-default = ["colored", "chrono"]
+default = ["colored", "chrono", "thread_ids"]
 colors = ["colored"]
 timestamps = ["chrono"]
 stderr = []
-threadid = []
+thread_ids = []
 
 [dependencies]
 log = { version = "^0.4.5", features = ["std"] }
