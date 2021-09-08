@@ -1,7 +1,11 @@
 use simple_logger::SimpleLogger;
 
 fn main() {
+    #[cfg(feature = "thread_ids")]
     SimpleLogger::new().with_thread_ids(true).init().unwrap();
+
+    #[cfg(not(feature = "thread_ids"))]
+    SimpleLogger::new().init().unwrap();
 
     std::thread::spawn(|| {
         log::warn!("Unnamed thread logs here.");
