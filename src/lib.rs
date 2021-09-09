@@ -425,7 +425,10 @@ impl Log for SimpleLogger {
 
             #[cfg(feature = "chrono")]
             let timestamp = if self.timestamps {
-                Field::new(Local::now().format("%Y-%m-%d %H:%M:%S,%3f"), TIMESTAMP_SEPARATORS)
+                Field::new(
+                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
+                    TIMESTAMP_SEPARATORS,
+                )
             } else {
                 Field::none()
             };
