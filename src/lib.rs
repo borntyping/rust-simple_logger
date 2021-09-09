@@ -36,19 +36,21 @@ use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
 use std::fmt::Alignment;
 
+// the format_args!() macros need a literal string, a const is not enough
 macro_rules! LOGGING_FMT {
     () => {
-        "{ts}{lvl}{tgt}{thr}{msg}"
+        "{TIMESTAMP}{LEVEL:>5}{TARGET}{THREAD}{MESSAGE}"
     };
 }
 
-// (prefix, suffix)
+// (prefix, suffix) separators for fields
 #[cfg(feature = "chrono")]
-const TS_FMT: (&str, &str) = ("", " ");
-const LVL_FMT: (&str, &str) = ("", " ");
-const TGT_FMT: (&str, &str) = ("[", "] ");
+const TIMESTAMP_SEPARATORS: (&str, &str) = ("", " ");
+const LEVEL_SEPARATORS: (&str, &str) = ("", " ");
+const TARGET_SEPARATORS: (&str, &str) = ("[", "] ");
 #[cfg(feature = "thread_ids")]
-const TRD_FMT: (&str, &str) = ("{", "} ");
+const THREAD_SEPARATORS: (&str, &str) = ("{", "} ");
+const MESSAGE_SEPARATORS: (&str, &str) = ("", "");
 
 // implementation detail:
 //  logged fields can be optional and are suppressed when 'None'
@@ -389,30 +391,30 @@ impl Log for SimpleLogger {
                                 Level::Debug => record.level().to_string().purple().to_string(),
                                 Level::Trace => record.level().to_string().normal().to_string(),
                             },
-                            LVL_FMT,
+                            LEVEL_SEPARATORS,
                         )
                     } else {
-                        Field::new(record.level().to_string(), LVL_FMT)
+                        Field::new(record.level().to_string(), LEVEL_SEPARATORS)
                     }
                 }
                 #[cfg(not(feature = "colored"))]
                 {
-                    Field::new(record.level().to_string(), LVL_FMT)
+                    Field::new(record.level().to_string(), LEVEL_SEPARATORS)
                 }
             };
 
             let target = if !record.target().is_empty() {
-                Field::new(record.target(), TGT_FMT)
+                Field::new(record.target(), TARGET_SEPARATORS)
             } else {
-                Field::new(record.module_path().unwrap_or_default(), TGT_FMT)
+                Field::new(record.module_path().unwrap_or_default(), TARGET_SEPARATORS)
             };
 
             #[cfg(feature = "thread_ids")]
             let thread_id = std::thread::current();
 
             #[cfg(feature = "thread_ids")]
-            let target_thread = if self.threadids {
-                Field::new(thread_id.name().unwrap_or("UNKNOWN"), TRD_FMT)
+            let thread = if self.threadids {
+                Field::new(thread_id.name().unwrap_or("UNKNOWN"), THREAD_SEPARATORS)
             } else {
                 Field::none()
             };
@@ -422,7 +424,7 @@ impl Log for SimpleLogger {
 
             #[cfg(feature = "chrono")]
             let timestamp = if self.timestamps {
-                Field::new(Local::now().format("%Y-%m-%d %H:%M:%S,%3f"), TS_FMT)
+                Field::new(Local::now().format("%Y-%m-%d %H:%M:%S,%3f"), TIMESTAMP_SEPARATORS)
             } else {
                 Field::none()
             };
@@ -433,21 +435,21 @@ impl Log for SimpleLogger {
             #[cfg(not(feature = "stderr"))]
             println!(
                 LOGGING_FMT!(),
-                ts = timestamp,
-                lvl = level_string,
-                thr = target_thread,
-                tgt = target,
-                msg = record.args()
+                TIMESTAMP = timestamp,
+                LEVEL = level_string,
+                THREAD = thread,
+                TARGET = target,
+                MESSAGE = Field::new(record.args(), MESSAGE_SEPARATORS)
             );
 
             #[cfg(feature = "stderr")]
             eprintln!(
                 LOGGING_FMT!(),
-                ts = timestamp,
-                lvl = level_string,
-                thr = target_thread,
-                tgt = target,
-                msg = record.args()
+                TIMESTAMP = timestamp,
+                LEVEL = level_string,
+                THREAD = thread,
+                TARGET = target,
+                MESSAGE = Field::new(record.args(), MESSAGE_SEPARATORS)
             );
         }
     }
