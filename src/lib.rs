@@ -34,6 +34,7 @@ use chrono::Local;
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
+use std::fmt::Alignment;
 
 macro_rules! LOGGING_FMT {
     () => {
@@ -48,6 +49,72 @@ const LVL_FMT: (&str, &str) = ("", " ");
 const TGT_FMT: (&str, &str) = ("[", "] ");
 #[cfg(feature = "thread_ids")]
 const TRD_FMT: (&str, &str) = ("{", "} ");
+
+// implementation detail:
+//  logged fields can be optional and are suppressed when 'None'
+//  For formatting purposes each field has a prefix and a suffix which are
+//  printed around it
+struct Field<T> {
+    entity: Option<T>,
+    prefix: &'static str,
+    suffix: &'static str,
+}
+
+impl<T> Field<T> {
+    fn new(entity: T, around: (&'static str, &'static str)) -> Self {
+        Field {
+            entity: Some(entity),
+            prefix: around.0,
+            suffix: around.1,
+        }
+    }
+
+    const fn none() -> Self {
+        Field {
+            entity: None,
+            prefix: "",
+            suffix: "",
+        }
+    }
+}
+
+// For statically disabled fields
+const FIELD_DISABLED: Field<char> = Field::none();
+
+impl<T> std::fmt::Display for Field<T>
+where
+    T: std::fmt::Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match &self.entity {
+            Some(x) => {
+                f.write_str(self.prefix)
+                 .and_then(
+                     |()|
+                     // someone more versed in rust fmt may find a better way to do this
+                     // so far only field width and alignment are handled here.
+                     match (f.width(), f.align()) {
+                         (Some(width), Some(Alignment::Left)) => {
+                             f.write_fmt(format_args!("{:<WIDTH$}", x, WIDTH = width))
+                         }
+                         (Some(width), Some(Alignment::Right)) => {
+                             f.write_fmt(format_args!("{:>WIDTH$}", x, WIDTH = width))
+                         }
+                         (Some(width), Some(Alignment::Center)) => {
+                             f.write_fmt(format_args!("{:^WIDTH$}", x, WIDTH = width))
+                         }
+                         (Some(width), _) => f.write_fmt(format_args!("{:WIDTH$}", x, WIDTH = width)),
+                         (_, _) => f.write_fmt(format_args!("{}", x)),
+                     })
+                 .and_then(
+                     |()|
+                     f.write_str(self.suffix)
+                 )
+            }
+            None => Ok(()),
+        }
+    }
+}
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
 ///
@@ -351,7 +418,7 @@ impl Log for SimpleLogger {
             };
 
             #[cfg(not(feature = "thread_ids"))]
-            let target_thread = "";
+            let thread = FIELD_DISABLED;
 
             #[cfg(feature = "chrono")]
             let timestamp = if self.timestamps {
@@ -361,7 +428,7 @@ impl Log for SimpleLogger {
             };
 
             #[cfg(not(feature = "chrono"))]
-            let timestamp = Field::<char>::none();
+            let timestamp = FIELD_DISABLED;
 
             #[cfg(not(feature = "stderr"))]
             println!(
@@ -386,46 +453,6 @@ impl Log for SimpleLogger {
     }
 
     fn flush(&self) {}
-}
-
-// implementation detail:
-//  logged fields can be optional and are suppressed when 'None'
-//  For formatting purposes each field has a prefix and a suffix which are
-//  printed around it
-struct Field<T> {
-    entity: Option<T>,
-    prefix: &'static str,
-    suffix: &'static str,
-}
-
-impl<T> Field<T> {
-    fn new(entity: T, around: (&'static str, &'static str)) -> Self {
-        Field {
-            entity: Some(entity),
-            prefix: around.0,
-            suffix: around.1,
-        }
-    }
-
-    fn none() -> Self {
-        Field {
-            entity: None,
-            prefix: "",
-            suffix: "",
-        }
-    }
-}
-
-impl<T> std::fmt::Display for Field<T>
-where
-    T: std::fmt::Display,
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match &self.entity {
-            Some(x) => write!(f, "{}{}{}", self.prefix, x, self.suffix),
-            None => write!(f, ""),
-        }
-    }
 }
 
 #[cfg(all(windows, feature = "colored"))]
