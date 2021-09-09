@@ -81,6 +81,7 @@ impl<T> Field<T> {
 }
 
 // For statically disabled fields
+#[allow(dead_code)]
 const FIELD_DISABLED: Field<char> = Field::none();
 
 impl<T> std::fmt::Display for Field<T>
