@@ -66,7 +66,7 @@ pub struct SimpleLogger {
     ///
     /// This field is only available if the `thread_ids` feature is enabled.
     #[cfg(feature = "thread_ids")]
-    threadids: bool,
+    thread_ids: bool,
 }
 
 impl SimpleLogger {
@@ -93,7 +93,7 @@ impl SimpleLogger {
             colors: true,
 
             #[cfg(feature = "thread_ids")]
-            threadids: false,
+            thread_ids: false,
         }
     }
 
@@ -242,8 +242,8 @@ impl SimpleLogger {
     /// Thread ids are disabled by default.
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "thread_ids")]
-    pub fn with_thread_ids(mut self, threadids: bool) -> SimpleLogger {
-        self.threadids = threadids;
+    pub fn with_thread_ids(mut self, thread_ids: bool) -> SimpleLogger {
+        self.thread_ids = thread_ids;
         self
     }
 
@@ -327,7 +327,7 @@ impl Log for SimpleLogger {
             let thread_id = std::thread::current();
 
             #[cfg(feature = "thread_ids")]
-            let (target_thread, target_delimiter) = if self.threadids {
+            let (target_thread, target_delimiter) = if self.thread_ids {
                 (thread_id.name().unwrap_or("UNKNOWN"), "@")
             } else {
                 ("", "")
