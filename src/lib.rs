@@ -33,6 +33,7 @@ use chrono::Local;
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Alignment;
 
@@ -43,31 +44,39 @@ macro_rules! LOGGING_FMT {
     };
 }
 
-// (prefix, suffix) separators for fields
+// (prefix, suffix, separator) separators for fields.
 #[cfg(feature = "chrono")]
-const TIMESTAMP_SEPARATORS: (&str, &str) = ("", " ");
-const LEVEL_SEPARATORS: (&str, &str) = ("", " ");
-const TARGET_SEPARATORS: (&str, &str) = ("[", "] ");
+const TIMESTAMP_SEPARATORS: (&str, &str, &str) = ("", "", " ");
+const LEVEL_SEPARATORS: (&str, &str, &str) = ("", "", " ");
+const TARGET_SEPARATORS: (&str, &str, &str) = ("[", "]", " ");
 #[cfg(feature = "thread_ids")]
-const THREAD_SEPARATORS: (&str, &str) = ("{", "} ");
-const MESSAGE_SEPARATORS: (&str, &str) = ("", "");
+const THREAD_SEPARATORS: (&str, &str, &str) = ("{", "}", " ");
+const MESSAGE_SEPARATORS: (&str, &str, &str) = ("", "", " ");
 
 // implementation detail:
 //  logged fields can be optional and are suppressed when 'None'
 //  For formatting purposes each field has a prefix and a suffix which are
 //  printed around it
-struct Field<T> {
+struct Field<'a, T> {
     entity: Option<T>,
     prefix: &'static str,
     suffix: &'static str,
+    separator: &'static str,
+    last_separator: Option<&'a RefCell<&'static str>>,
 }
 
-impl<T> Field<T> {
-    fn new(entity: T, around: (&'static str, &'static str)) -> Self {
+impl<'a, T> Field<'a, T> {
+    fn new(
+        entity: T,
+        around: (&'static str, &'static str, &'static str),
+        last_separator: &'a RefCell<&'static str>,
+    ) -> Self {
         Field {
             entity: Some(entity),
             prefix: around.0,
             suffix: around.1,
+            separator: around.2,
+            last_separator: Some(last_separator),
         }
     }
 
@@ -76,6 +85,8 @@ impl<T> Field<T> {
             entity: None,
             prefix: "",
             suffix: "",
+            separator: "",
+            last_separator: None,
         }
     }
 }
@@ -84,18 +95,23 @@ impl<T> Field<T> {
 #[allow(dead_code)]
 const FIELD_DISABLED: Field<char> = Field::none();
 
-impl<T> std::fmt::Display for Field<T>
+impl<T> std::fmt::Display for Field<'_, T>
 where
     T: std::fmt::Display,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match &self.entity {
             Some(x) => {
-                f.write_str(self.prefix)
-                 .and_then(
-                     |()|
-                     // someone more versed in rust fmt may find a better way to do this
-                     // so far only field width and alignment are handled here.
+                let mut last_separator = self.last_separator.unwrap().borrow_mut();
+                f.write_str(&last_separator).and_then(
+                    |()| {
+                        *last_separator = self.separator;
+                        f.write_str(self.prefix)
+                    })
+                .and_then(
+                    |()|
+                    // someone more versed in rust fmt may find a better way to do this
+                    // so far only field width and alignment are handled here.
                      match (f.width(), f.align()) {
                          (Some(width), Some(Alignment::Left)) => {
                              f.write_fmt(format_args!("{:<WIDTH$}", x, WIDTH = width))
@@ -380,6 +396,9 @@ impl Log for SimpleLogger {
 
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
+            // cache the last separator which gets prpended before the next field (if any)
+            let last_separator = RefCell::new("");
+
             let level_string = {
                 #[cfg(feature = "colored")]
                 {
@@ -393,21 +412,34 @@ impl Log for SimpleLogger {
                                 Level::Trace => record.level().to_string().normal().to_string(),
                             },
                             LEVEL_SEPARATORS,
+                            &last_separator,
                         )
                     } else {
-                        Field::new(record.level().to_string(), LEVEL_SEPARATORS)
+                        Field::new(
+                            record.level().to_string(),
+                            LEVEL_SEPARATORS,
+                            &last_separator,
+                        )
                     }
                 }
                 #[cfg(not(feature = "colored"))]
                 {
-                    Field::new(record.level().to_string(), LEVEL_SEPARATORS)
+                    Field::new(
+                        record.level().to_string(),
+                        LEVEL_SEPARATORS,
+                        &last_separator,
+                    )
                 }
             };
 
             let target = if !record.target().is_empty() {
-                Field::new(record.target(), TARGET_SEPARATORS)
+                Field::new(record.target(), TARGET_SEPARATORS, &last_separator)
             } else {
-                Field::new(record.module_path().unwrap_or_default(), TARGET_SEPARATORS)
+                Field::new(
+                    record.module_path().unwrap_or_default(),
+                    TARGET_SEPARATORS,
+                    &last_separator,
+                )
             };
 
             #[cfg(feature = "thread_ids")]
@@ -415,7 +447,11 @@ impl Log for SimpleLogger {
 
             #[cfg(feature = "thread_ids")]
             let thread = if self.threadids {
-                Field::new(thread_id.name().unwrap_or("UNKNOWN"), THREAD_SEPARATORS)
+                Field::new(
+                    thread_id.name().unwrap_or("UNKNOWN"),
+                    THREAD_SEPARATORS,
+                    &last_separator,
+                )
             } else {
                 Field::none()
             };
@@ -428,6 +464,7 @@ impl Log for SimpleLogger {
                 Field::new(
                     Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     TIMESTAMP_SEPARATORS,
+                    &last_separator,
                 )
             } else {
                 Field::none()
@@ -443,7 +480,7 @@ impl Log for SimpleLogger {
                 LEVEL = level_string,
                 THREAD = thread,
                 TARGET = target,
-                MESSAGE = Field::new(record.args(), MESSAGE_SEPARATORS)
+                MESSAGE = Field::new(record.args(), MESSAGE_SEPARATORS, &last_separator)
             );
 
             #[cfg(feature = "stderr")]
@@ -453,7 +490,7 @@ impl Log for SimpleLogger {
                 LEVEL = level_string,
                 THREAD = thread,
                 TARGET = target,
-                MESSAGE = Field::new(record.args(), MESSAGE_SEPARATORS)
+                MESSAGE = Field::new(record.args(), MESSAGE_SEPARATORS, &last_separator)
             );
         }
     }
