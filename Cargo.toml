@@ -8,15 +8,15 @@ repository = "https://github.com/borntyping/rust-simple_logger"
 edition = "2018"
 
 [features]
-default = ["colored", "chrono"]
+default = ["colored", "time"]
 colors = ["colored"]
-timestamps = ["chrono"]
+timestamps = ["time"]
 stderr = []
 
 [dependencies]
 log = { version = "^0.4.5", features = ["std"] }
-chrono = { version = "0.4.6", optional = true }
 colored = { version = "^1.6", optional = true }
+time = { version = "0.3.4", features = ["local-offset", "formatting", "macros"], optional = true }
 
 [target.'cfg(windows)'.dependencies]
 atty = "0.2.13"
@@ -28,4 +28,4 @@ required-features = ["colored"]
 
 [[example]]
 name = "timestamps"
-required-features = ["chrono"]
+required-features = ["time"]
