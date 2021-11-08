@@ -34,7 +34,6 @@ use time::OffsetDateTime;
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
-use winapi::um::wincon::ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
 // Same as Local::now().format("%Y-%m-%d %H:%M:%S,%3f") from `chrono`
 static FORMAT: &[::time::format_description::FormatItem<'_>] = time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]");
