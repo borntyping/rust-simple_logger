@@ -28,16 +28,12 @@
 //! simple_logger::init_with_level(log::Level::Warn).unwrap();
 //! ```
 
-#[cfg(feature = "time")]
-use time::OffsetDateTime;
+#[cfg(feature = "chrono")]
+use chrono::Local;
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
-use winapi::um::wincon::ENABLE_VIRTUAL_TERMINAL_PROCESSING;
-
-// Same as Local::now().format("%Y-%m-%d %H:%M:%S,%3f") from `chrono`
-static FORMAT: &[::time::format_description::FormatItem<'_>] = time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]");
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
 ///
@@ -56,8 +52,8 @@ pub struct SimpleLogger {
 
     /// Whether to include timestamps or not
     ///
-    /// This field is only available if the `time` feature is enabled.
-    #[cfg(feature = "time")]
+    /// This field is only available if the `chrono` feature is enabled.
+    #[cfg(feature = "chrono")]
     timestamps: bool,
 
     /// Whether to use color output or not.
@@ -84,7 +80,7 @@ impl SimpleLogger {
             default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
 
-            #[cfg(feature = "time")]
+            #[cfg(feature = "chrono")]
             timestamps: true,
 
             #[cfg(feature = "colored")]
@@ -213,9 +209,9 @@ impl SimpleLogger {
 
     /// Control whether timestamps are printed or not.
     ///
-    /// This method is only available if the `time` feature is enabled.
+    /// This method is only available if the `chrono` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
-    #[cfg(feature = "time")]
+    #[cfg(feature = "chrono")]
     pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
         self.timestamps = timestamps;
         self
@@ -307,12 +303,12 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
 
-            #[cfg(feature = "time")]
+            #[cfg(feature = "chrono")]
             if self.timestamps {
                 #[cfg(not(feature = "stderr"))]
                 println!(
                     "{} {:<5} [{}] {}",
-                    OffsetDateTime::now_local().unwrap().format(&FORMAT).unwrap(),
+                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     level_string,
                     target,
                     record.args()
@@ -320,7 +316,7 @@ impl Log for SimpleLogger {
                 #[cfg(feature = "stderr")]
                 eprintln!(
                     "{} {:<5} [{}] {}",
-                    OffsetDateTime::now_local().unwrap().format(&FORMAT).unwrap(),
+                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
                     level_string,
                     target,
                     record.args()
@@ -440,7 +436,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "time")]
+    #[cfg(feature = "chrono")]
     fn test_with_timestamps() {
         let mut builder = SimpleLogger::new();
         assert!(builder.timestamps == true);
