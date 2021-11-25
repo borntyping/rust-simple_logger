@@ -35,8 +35,6 @@ jobs:
 
     strategy:
       matrix:
-        continue-on-error:
-          - false
         os:
           - ubuntu-latest
           - windows-latest
@@ -48,6 +46,8 @@ jobs:
           - --no-default-features
           - --no-default-features --features colors
           - --no-default-features --features timestamps
+        continue-on-error:
+          - false
         exclude:
           - { os: macos-latest, toolchain: stable, features: --all-features }
           - {
