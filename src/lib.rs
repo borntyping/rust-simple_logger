@@ -28,15 +28,17 @@
 //! simple_logger::init_with_level(log::Level::Warn).unwrap();
 //! ```
 
-#[cfg(feature = "timestamps")]
-use time::{format_description::FormatItem, OffsetDateTime};
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
+#[cfg(feature = "timestamps")]
+use time::{format_description::FormatItem, OffsetDateTime};
 
 #[cfg(feature = "timestamps")]
-const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]");
+const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!(
+    "[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]"
+);
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
 ///
@@ -323,7 +325,13 @@ impl Log for SimpleLogger {
                 ""
             };
 
-            let message = format!("{}{:<5} [{}] {}", timestamp, level_string, target, record.args());
+            let message = format!(
+                "{}{:<5} [{}] {}",
+                timestamp,
+                level_string,
+                target,
+                record.args()
+            );
 
             #[cfg(not(feature = "stderr"))]
             println!("{}", message);
