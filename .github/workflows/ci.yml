@@ -1,3 +1,4 @@
+---
 name: ci
 
 on: [pull_request, push]
@@ -42,9 +43,10 @@ jobs:
         toolchain:
           - stable
         features:
-          - --all-features
+          - ""
           - --no-default-features
           - --no-default-features --features colors
+          - --no-default-features --features threads
           - --no-default-features --features timestamps
         continue-on-error:
           - false

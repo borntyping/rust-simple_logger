@@ -1,6 +1,6 @@
 [package]
 name = "simple_logger"
-version = "1.14.0"
+version = "1.15.0"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
@@ -10,7 +10,9 @@ edition = "2018"
 [features]
 default = ["colored", "time"]
 colors = ["colored"]
+threads = []
 timestamps = ["time"]
+nightly = []
 stderr = []
 
 [dependencies]
@@ -25,6 +27,10 @@ winapi = { version = "0.3", features = ["handleapi", "winbase"]}
 [[example]]
 name = "colors"
 required-features = ["colors"]
+
+[[example]]
+name = "threads"
+required-features = ["threads"]
 
 [[example]]
 name = "timestamps"

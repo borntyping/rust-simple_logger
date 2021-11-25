@@ -28,6 +28,8 @@
 //! simple_logger::init_with_level(log::Level::Warn).unwrap();
 //! ```
 
+#![cfg_attr(feature = "nightly", feature(thread_id_value))]
+
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
@@ -54,6 +56,12 @@ pub struct SimpleLogger {
     /// After initialization, the vector is sorted so that the first (prefix) match
     /// directly gives us the desired log level.
     module_levels: Vec<(String, LevelFilter)>,
+
+    /// Whether to include thread names (and IDs) or not
+    ///
+    /// This field is only available if the `threads` feature is enabled.
+    #[cfg(feature = "threads")]
+    threads: bool,
 
     /// Whether to include timestamps or not
     ///
@@ -84,6 +92,9 @@ impl SimpleLogger {
         SimpleLogger {
             default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
+
+            #[cfg(feature = "threads")]
+            threads: false,
 
             #[cfg(feature = "timestamps")]
             timestamps: true,
@@ -212,6 +223,17 @@ impl SimpleLogger {
         self
     }
 
+    /// Control whether thread names (and IDs) are printed or not.
+    ///
+    /// This method is only available if the `threads` feature is enabled.
+    /// Thread names are disabled by default.
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "threads")]
+    pub fn with_threads(mut self, threads: bool) -> SimpleLogger {
+        self.threads = threads;
+        self
+    }
+
     /// Control whether timestamps are printed or not.
     ///
     /// This method is only available if the `timestamps` feature is enabled.
@@ -308,6 +330,30 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
 
+            let thread = {
+                #[cfg(feature = "threads")]
+                if self.threads {
+                    let thread = std::thread::current();
+
+                    format!("@{}", {
+                        #[cfg(feature = "nightly")]
+                        {
+                            thread.name().unwrap_or(&thread.id().as_u64().to_string())
+                        }
+
+                        #[cfg(not(feature = "nightly"))]
+                        {
+                            thread.name().unwrap_or("?")
+                        }
+                    })
+                } else {
+                    "".to_string()
+                }
+
+                #[cfg(not(feature = "threads"))]
+                ""
+            };
+
             let timestamp = {
                 #[cfg(feature = "timestamps")]
                 if self.timestamps {
@@ -328,10 +374,11 @@ impl Log for SimpleLogger {
             };
 
             let message = format!(
-                "{}{:<5} [{}] {}",
+                "{}{:<5} [{}{}] {}",
                 timestamp,
                 level_string,
                 target,
+                thread,
                 record.args()
             );
 
