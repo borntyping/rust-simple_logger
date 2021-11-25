@@ -31,7 +31,7 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    continue-on-error: ${{ matrix.toolchain != stable }}
+    continue-on-error: ${{ matrix.continue-on-error }}
 
     strategy:
       matrix:
@@ -66,6 +66,18 @@ jobs:
               os: ubuntu-latest,
               toolchain: nightly,
               features: --all-features,
+              continue-on-error: true,
+            }
+          - {
+              os: macos-latest,
+              toolchain: stable,
+              features: --all-features,
+              continue-on-error: true,
+            }
+          - {
+              os: macos-latest,
+              toolchain: stable,
+              features: --no-default-features --features timestamps,
               continue-on-error: true,
             }
 
