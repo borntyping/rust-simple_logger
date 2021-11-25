@@ -31,12 +31,21 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    continue-on-error: ${{ matrix.toolchain != 'stable' }}
+    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.toolchain != 'macos-latest' && (matrix.features == '--all-features' || matrix.features == '--no-default-features --features timestamps')) }}
 
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        toolchain: [stable]
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+        toolchain:
+          - stable
+        features:
+          - --all-features
+          - --no-default-features
+          - --no-default-features --features colors
+          - --no-default-features --features timestamps
         include:
           - { os: ubuntu-latest, toolchain: beta }
           - { os: ubuntu-latest, toolchain: nightly }
@@ -47,16 +56,8 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
-
-      - run: cargo +${{ matrix.toolchain }} build --all-features
-      - run: cargo +${{ matrix.toolchain }} build --no-default-features
-      - run: cargo +${{ matrix.toolchain }} build --no-default-features --features colors
-      - run: cargo +${{ matrix.toolchain }} build --no-default-features --features timestamps
-
-      - run: cargo +${{ matrix.toolchain }} test --all-features
-      - run: cargo +${{ matrix.toolchain }} test --no-default-features
-      - run: cargo +${{ matrix.toolchain }} test --no-default-features --features colors
-      - run: cargo +${{ matrix.toolchain }} test --no-default-features --features timestamps
+      - run: cargo +${{ matrix.toolchain }} build ${{ matrix.features }}
+      - run: cargo +${{ matrix.toolchain }} test ${{ matrix.features }}
 
   rust-publish-crates:
     if: startsWith(github.ref, 'refs/tags/')
