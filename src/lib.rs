@@ -313,9 +313,11 @@ impl Log for SimpleLogger {
                 if self.timestamps {
                     format!("{} ", OffsetDateTime::now_local().expect(concat!(
                         "Could not determine the UTC offset on this system. ",
-                        "The time crate disables this feature by default in multi-threaded environments. ",
-                        "Carefully consider using it's \"unsound_local_offset\" feature flag. ",
-                        "https://time-rs.github.io/internal-api/time/index.html#feature-flags"
+                        "Possible causes are that the time crate does not implement \"local_offset_at\" ",
+                        "on your system, or that you are running in a multi-threaded environment and ",
+                        "the time crate is returning \"None\" from \"local_offset_at\" to avoid unsafe ",
+                        "behaviour. See the time crate's documentation for more information. ",
+                        "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                     )).format(&TIMESTAMP_FORMAT).unwrap())
                 } else {
                     "".to_string()
