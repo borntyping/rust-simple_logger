@@ -32,7 +32,7 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    continue-on-error: ${{ matrix.continue-on-error }}
+    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.toolchain == 'macos-latest' && contains(matrix.features, 'timestamps') }}
 
     strategy:
       matrix:
@@ -43,44 +43,20 @@ jobs:
         toolchain:
           - stable
         features:
-          - ""
-          - --no-default-features
-          - --no-default-features --features colors
-          - --no-default-features --features threads
-          - --no-default-features --features timestamps
-        continue-on-error:
-          - false
-        exclude:
-          - { os: macos-latest, toolchain: stable, features: --all-features }
-          - {
-              os: macos-latest,
-              toolchain: stable,
-              features: --no-default-features --features timestamps,
-            }
+          - "colors"
+          - "threads"
+          - "timestamps"
+          - "stderr"
         include:
           - {
               os: ubuntu-latest,
               toolchain: beta,
-              features: --all-features,
-              continue-on-error: true,
+              features: "colors,threads,timestamps",
             }
           - {
               os: ubuntu-latest,
               toolchain: nightly,
-              features: --all-features,
-              continue-on-error: true,
-            }
-          - {
-              os: macos-latest,
-              toolchain: stable,
-              features: --all-features,
-              continue-on-error: true,
-            }
-          - {
-              os: macos-latest,
-              toolchain: stable,
-              features: --no-default-features --features timestamps,
-              continue-on-error: true,
+              features: "threads,nightly",
             }
 
     steps:
@@ -89,8 +65,8 @@ jobs:
         with:
           toolchain: ${{ matrix.toolchain }}
           profile: minimal
-      - run: cargo +${{ matrix.toolchain }} build ${{ matrix.features }}
-      - run: cargo +${{ matrix.toolchain }} test ${{ matrix.features }}
+      - run: cargo +${{ matrix.toolchain }} build --no-default-features --features ${{ matrix.features }}
+      - run: cargo +${{ matrix.toolchain }} test --no-default-features --features ${{ matrix.features }}
 
   rust-publish-crates:
     if: startsWith(github.ref, 'refs/tags/')
