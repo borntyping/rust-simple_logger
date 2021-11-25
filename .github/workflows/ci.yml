@@ -31,10 +31,12 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.toolchain == 'macos-latest' && (matrix.features == '--all-features' || matrix.features == '--no-default-features --features timestamps')) }}
+    continue-on-error: ${{ matrix.continue-on-error }}
 
     strategy:
       matrix:
+        continue-on-error:
+          - false
         os:
           - ubuntu-latest
           - windows-latest
@@ -46,9 +48,38 @@ jobs:
           - --no-default-features
           - --no-default-features --features colors
           - --no-default-features --features timestamps
+        exclude:
+          - { os: macos-latest, toolchain: stable, features: --all-features }
+          - {
+              os: macos-latest,
+              toolchain: stable,
+              features: --no-default-features --features timestamps,
+            }
         include:
-          - { os: ubuntu-latest, toolchain: beta }
-          - { os: ubuntu-latest, toolchain: nightly }
+          - {
+              os: ubuntu-latest,
+              toolchain: beta,
+              features: --all-features,
+              continue-on-error: true,
+            }
+          - {
+              os: ubuntu-latest,
+              toolchain: nightly,
+              features: --all-features,
+              continue-on-error: true,
+            }
+          - {
+              os: macos-latest,
+              toolchain: stable,
+              features: --all-features,
+              continue-on-error: true,
+            }
+          - {
+              os: macos-latest,
+              toolchain: stable,
+              features: --no-default-features --features timestamps,
+              continue-on-error: true,
+            }
 
     steps:
       - uses: actions/checkout@v2
