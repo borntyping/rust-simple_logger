@@ -31,7 +31,7 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.toolchain != 'macos-latest' && (matrix.features == '--all-features' || matrix.features == '--no-default-features --features timestamps')) }}
+    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.toolchain == 'macos-latest' && (matrix.features == '--all-features' || matrix.features == '--no-default-features --features timestamps')) }}
 
     strategy:
       matrix:
