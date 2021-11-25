@@ -32,7 +32,7 @@ jobs:
   rust-test:
     runs-on: ${{ matrix.os }}
 
-    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.toolchain == 'macos-latest' && contains(matrix.features, 'timestamps')) }}
+    continue-on-error: ${{ matrix.toolchain != 'stable' || (matrix.os == 'macos-latest' && contains(matrix.features, 'timestamps')) }}
 
     strategy:
       matrix:
@@ -56,7 +56,7 @@ jobs:
           - {
               os: ubuntu-latest,
               toolchain: nightly,
-              features: "threads,nightly",
+              features: "colors,threads,timestamps,nightly",
             }
 
     steps:
