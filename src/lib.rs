@@ -303,31 +303,25 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
 
-            #[cfg(feature = "chrono")]
-            if self.timestamps {
-                #[cfg(not(feature = "stderr"))]
-                println!(
-                    "{} {:<5} [{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
-                    level_string,
-                    target,
-                    record.args()
-                );
-                #[cfg(feature = "stderr")]
-                eprintln!(
-                    "{} {:<5} [{}] {}",
-                    Local::now().format("%Y-%m-%d %H:%M:%S,%3f"),
-                    level_string,
-                    target,
-                    record.args()
-                );
-                return;
+            let timestamp = {
+                #[cfg(feature = "chrono")]
+                if self.timestamps {
+                    format!("{} ", Local::now().format("%Y-%m-%d %H:%M:%S,%3f"));
+                } else {
+                    "".to_string()
+                }
+
+                #[cfg(not(feature = "chrono"))]
+                "";
             }
 
+            let message = format!("{}{:<5} [{}] {}", timestamp, level_string, target, record.args());
+
             #[cfg(not(feature = "stderr"))]
-            println!("{:<5} [{}] {}", level_string, target, record.args());
+            println!("{}", message);
+
             #[cfg(feature = "stderr")]
-            eprintln!("{:<5} [{}] {}", level_string, target, record.args());
+            eprintln!("{}", message);
         }
     }
 
