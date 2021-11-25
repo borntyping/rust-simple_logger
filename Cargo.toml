@@ -1,6 +1,6 @@
 [package]
 name = "simple_logger"
-version = "1.13.1"
+version = "1.14.0"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
@@ -8,14 +8,14 @@ repository = "https://github.com/borntyping/rust-simple_logger"
 edition = "2018"
 
 [features]
-default = ["colored", "chrono"]
+default = ["colored", "time"]
 colors = ["colored"]
-timestamps = ["chrono"]
+timestamps = ["time"]
 stderr = []
 
 [dependencies]
 log = { version = "^0.4.5", features = ["std"] }
-chrono = { version = "0.4.6", optional = true }
+time = { version = "0.3.5", features = ["formatting", "local-offset", "macros"], optional = true }
 colored = { version = "^1.6", optional = true }
 
 [target.'cfg(windows)'.dependencies]
@@ -24,8 +24,8 @@ winapi = { version = "0.3", features = ["handleapi", "winbase"]}
 
 [[example]]
 name = "colors"
-required-features = ["colored"]
+required-features = ["colors"]
 
 [[example]]
 name = "timestamps"
-required-features = ["chrono"]
+required-features = ["timestamps"]

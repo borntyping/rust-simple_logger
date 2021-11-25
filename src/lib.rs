@@ -28,12 +28,15 @@
 //! simple_logger::init_with_level(log::Level::Warn).unwrap();
 //! ```
 
-#[cfg(feature = "chrono")]
-use chrono::Local;
+#[cfg(feature = "timestamps")]
+use time::{format_description::FormatItem, OffsetDateTime};
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
+
+#[cfg(feature = "timestamps")]
+const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]");
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
 ///
@@ -52,8 +55,8 @@ pub struct SimpleLogger {
 
     /// Whether to include timestamps or not
     ///
-    /// This field is only available if the `chrono` feature is enabled.
-    #[cfg(feature = "chrono")]
+    /// This field is only available if the `timestamps` feature is enabled.
+    #[cfg(feature = "timestamps")]
     timestamps: bool,
 
     /// Whether to use color output or not.
@@ -80,7 +83,7 @@ impl SimpleLogger {
             default_level: LevelFilter::Trace,
             module_levels: Vec::new(),
 
-            #[cfg(feature = "chrono")]
+            #[cfg(feature = "timestamps")]
             timestamps: true,
 
             #[cfg(feature = "colored")]
@@ -209,9 +212,9 @@ impl SimpleLogger {
 
     /// Control whether timestamps are printed or not.
     ///
-    /// This method is only available if the `chrono` feature is enabled.
+    /// This method is only available if the `timestamps` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "timestamps")]
     pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
         self.timestamps = timestamps;
         self
@@ -304,16 +307,21 @@ impl Log for SimpleLogger {
             };
 
             let timestamp = {
-                #[cfg(feature = "chrono")]
+                #[cfg(feature = "timestamps")]
                 if self.timestamps {
-                    format!("{} ", Local::now().format("%Y-%m-%d %H:%M:%S,%3f"));
+                    format!("{} ", OffsetDateTime::now_local().expect(concat!(
+                        "Could not determine the UTC offset on this system. ",
+                        "The time crate disables this feature by default in multi-threaded environments. ",
+                        "Carefully consider using it's \"unsound_local_offset\" feature flag. ",
+                        "https://time-rs.github.io/internal-api/time/index.html#feature-flags"
+                    )).format(&TIMESTAMP_FORMAT).unwrap())
                 } else {
                     "".to_string()
                 }
 
-                #[cfg(not(feature = "chrono"))]
-                "";
-            }
+                #[cfg(not(feature = "timestamps"))]
+                ""
+            };
 
             let message = format!("{}{:<5} [{}] {}", timestamp, level_string, target, record.args());
 
@@ -430,7 +438,7 @@ mod test {
     }
 
     #[test]
-    #[cfg(feature = "chrono")]
+    #[cfg(feature = "timestamps")]
     fn test_with_timestamps() {
         let mut builder = SimpleLogger::new();
         assert!(builder.timestamps == true);
