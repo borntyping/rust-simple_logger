@@ -1,6 +1,6 @@
 [package]
 name = "simple_logger"
-version = "1.15.1"
+version = "1.15.2"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
@@ -12,6 +12,7 @@ default = ["colors", "timestamps"]
 colors = ["colored"]
 threads = []
 timestamps = ["time"]
+timestamps_utc = ["time"]
 nightly = []
 stderr = []
 

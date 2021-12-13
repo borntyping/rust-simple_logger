@@ -50,6 +50,14 @@ default-features = false
 features = ["timestamps"]
 ```
 
+To include the `timestamps_utc` feature, but not the `colors` feature:
+
+```
+[dependencies.simple_logger]
+default-features = false
+features = ["timestamps_utc"]
+```
+
 To include the `colors` feature, but not the `timestamps` feature:
 
 ```

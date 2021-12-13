@@ -34,10 +34,10 @@
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
-#[cfg(feature = "timestamps")]
+#[cfg(any(feature = "timestamps", feature = "timestamps_utc"))]
 use time::{format_description::FormatItem, OffsetDateTime};
 
-#[cfg(feature = "timestamps")]
+#[cfg(any(feature = "timestamps", feature = "timestamps_utc"))]
 const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!(
     "[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]"
 );
@@ -66,7 +66,7 @@ pub struct SimpleLogger {
     /// Whether to include timestamps or not
     ///
     /// This field is only available if the `timestamps` feature is enabled.
-    #[cfg(feature = "timestamps")]
+    #[cfg(any(feature = "timestamps", feature = "timestamps_utc"))]
     timestamps: bool,
 
     /// Whether to use color output or not.
@@ -96,7 +96,7 @@ impl SimpleLogger {
             #[cfg(feature = "threads")]
             threads: false,
 
-            #[cfg(feature = "timestamps")]
+            #[cfg(any(feature = "timestamps", feature = "timestamps_utc"))]
             timestamps: true,
 
             #[cfg(feature = "colored")]
@@ -238,7 +238,7 @@ impl SimpleLogger {
     ///
     /// This method is only available if the `timestamps` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
-    #[cfg(feature = "timestamps")]
+    #[cfg(any(feature = "timestamps", feature = "timestamps_utc"))]
     pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
         self.timestamps = timestamps;
         self
@@ -354,8 +354,8 @@ impl Log for SimpleLogger {
                 ""
             };
 
+            #[cfg(feature = "timestamps")]
             let timestamp = {
-                #[cfg(feature = "timestamps")]
                 if self.timestamps {
                     format!("{} ", OffsetDateTime::now_local().expect(concat!(
                         "Could not determine the UTC offset on this system. ",
@@ -368,10 +368,22 @@ impl Log for SimpleLogger {
                 } else {
                     "".to_string()
                 }
-
-                #[cfg(not(feature = "timestamps"))]
-                ""
             };
+
+            #[cfg(feature = "timestamps_utc")]
+            let timestamp = {
+                if self.timestamps {
+                    format!(
+                        "{} ",
+                        OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT).unwrap()
+                    )
+                } else {
+                    "".to_string()
+                }
+            };
+
+            #[cfg(not(any(feature = "timestamps", feature = "timestamps_utc")))]
+            let timestamp = { "" };
 
             let message = format!(
                 "{}{:<5} [{}{}] {}",
