@@ -42,6 +42,14 @@ const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!(
     "[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]"
 );
 
+#[cfg(feature = "timestamps")]
+#[derive(PartialEq)]
+enum Timestamps {
+    None,
+    Local,
+    UTC
+}
+
 /// Implements [`Log`] and a set of simple builder methods for configuration.
 ///
 /// Use the various "builder" methods on this struct to configure the logger,
@@ -63,17 +71,11 @@ pub struct SimpleLogger {
     #[cfg(feature = "threads")]
     threads: bool,
 
-    /// Whether to include timestamps or not
+    /// Control how timestamps are displayed.
     ///
     /// This field is only available if the `timestamps` feature is enabled.
     #[cfg(feature = "timestamps")]
-    timestamps: bool,
-
-    /// Whether to show timestamps in UTC time (true) or local time (false)
-    ///
-    /// This field is only available if the `timestamps` feature is enabled.
-    #[cfg(feature = "timestamps")]
-    timestamps_utc: bool,
+    timestamps: Timestamps,
 
     /// Whether to use color output or not.
     ///
@@ -103,10 +105,7 @@ impl SimpleLogger {
             threads: false,
 
             #[cfg(feature = "timestamps")]
-            timestamps: true,
-
-            #[cfg(feature = "timestamps")]
-            timestamps_utc: false,
+            timestamps: Timestamps::Local,
 
             #[cfg(feature = "colored")]
             colors: true,
@@ -255,34 +254,41 @@ impl SimpleLogger {
         note = "Use [`with_local_timestamps`] or [`with_utc_timestamps`] instead. Will be removed in version 2.0.0."
     )]
     pub fn with_timestamps(mut self, timestamps: bool) -> SimpleLogger {
-        self.timestamps = timestamps;
-        self.timestamps_utc = false;
+        if timestamps {
+            self.timestamps = Timestamps::Local
+        } else {
+            self.timestamps = Timestamps::None
+        }
         self
     }
 
-    /// Control whether timestamps are printed or not.
-    ///
-    /// Timestamps will be displayed in the local timezone.
+    /// Don't display any timestamps.
     ///
     /// This method is only available if the `timestamps` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "timestamps")]
-    pub fn with_local_timestamps(mut self, timestamps: bool) -> SimpleLogger {
-        self.timestamps = timestamps;
-        self.timestamps_utc = false;
+    pub fn without_timestamps(mut self) -> SimpleLogger {
+        self.timestamps = Timestamps::None;
         self
     }
 
-    /// Control whether timestamps are printed or not.
-    ///
-    /// Timestamps will be displayed in UTC.
+    /// Display timestamps using the local timezone.
     ///
     /// This method is only available if the `timestamps` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "timestamps")]
-    pub fn with_utc_timestamps(mut self, timestamps: bool) -> SimpleLogger {
-        self.timestamps = timestamps;
-        self.timestamps_utc = true;
+    pub fn with_local_timestamps(mut self) -> SimpleLogger {
+        self.timestamps = Timestamps::Local;
+        self
+    }
+
+    /// Display timestamps using UTC.
+    ///
+    /// This method is only available if the `timestamps` feature is enabled.
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "timestamps")]
+    pub fn with_utc_timestamps(mut self) -> SimpleLogger {
+        self.timestamps = Timestamps::UTC;
         self
     }
 
@@ -398,21 +404,17 @@ impl Log for SimpleLogger {
 
             let timestamp = {
                 #[cfg(feature = "timestamps")]
-                if self.timestamps {
-                    if self.timestamps_utc {
-                        format!("{} ", OffsetDateTime::now_utc())
-                    } else {
-                        format!("{} ", OffsetDateTime::now_local().expect(concat!(
+                match self.timestamps {
+                    Timestamps::None => "".to_string(),
+                    Timestamps::Local => format!("{} ", OffsetDateTime::now_local().expect(concat!(
                             "Could not determine the UTC offset on this system. ",
                             "Possible causes are that the time crate does not implement \"local_offset_at\" ",
                             "on your system, or that you are running in a multi-threaded environment and ",
                             "the time crate is returning \"None\" from \"local_offset_at\" to avoid unsafe ",
                             "behaviour. See the time crate's documentation for more information. ",
                             "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
-                        )).format(&TIMESTAMP_FORMAT).unwrap())
-                    }
-                } else {
-                    "".to_string()
+                        )).format(&TIMESTAMP_FORMAT).unwrap()),
+                    Timestamps::UTC => format!("{} ", OffsetDateTime::now_utc()),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
@@ -544,8 +546,7 @@ mod test {
     #[cfg(feature = "timestamps")]
     fn test_timestamps_defaults() {
         let builder = SimpleLogger::new();
-        assert!(builder.timestamps == true);
-        assert!(builder.timestamps_utc == false);
+        assert!(builder.timestamps == Timestamps::Local);
     }
 
     #[test]
@@ -553,24 +554,21 @@ mod test {
     #[allow(deprecated)]
     fn test_with_timestamps() {
         let builder = SimpleLogger::new().with_timestamps(false);
-        assert!(builder.timestamps == false);
-        assert!(builder.timestamps_utc == false);
+        assert!(builder.timestamps == Timestamps::None);
     }
 
     #[test]
     #[cfg(feature = "timestamps")]
     fn test_with_utc_timestamps() {
-        let builder = SimpleLogger::new().with_utc_timestamps(true);
-        assert!(builder.timestamps == true);
-        assert!(builder.timestamps_utc == true);
+        let builder = SimpleLogger::new().with_utc_timestamps();
+        assert!(builder.timestamps == Timestamps::UTC);
     }
 
     #[test]
     #[cfg(feature = "timestamps")]
     fn test_with_local_timestamps() {
-        let builder = SimpleLogger::new().with_local_timestamps(true);
-        assert!(builder.timestamps == true);
-        assert!(builder.timestamps_utc == false);
+        let builder = SimpleLogger::new().with_local_timestamps();
+        assert!(builder.timestamps == Timestamps::Local);
     }
 
     #[test]
