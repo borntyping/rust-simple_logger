@@ -414,7 +414,7 @@ impl Log for SimpleLogger {
                             "behaviour. See the time crate's documentation for more information. ",
                             "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                         )).format(&TIMESTAMP_FORMAT).unwrap()),
-                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc()),
+                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT).unwrap()),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
