@@ -5,7 +5,7 @@ on:
   pull_request:
   push:
     branches:
-      - master
+      - main
 
 env:
   # Just a reassurance to mitigate sudden network connection problems
