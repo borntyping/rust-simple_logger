@@ -47,7 +47,7 @@ const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!(
 enum Timestamps {
     None,
     Local,
-    UTC
+    Utc,
 }
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
@@ -288,7 +288,7 @@ impl SimpleLogger {
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "timestamps")]
     pub fn with_utc_timestamps(mut self) -> SimpleLogger {
-        self.timestamps = Timestamps::UTC;
+        self.timestamps = Timestamps::Utc;
         self
     }
 
@@ -414,7 +414,7 @@ impl Log for SimpleLogger {
                             "behaviour. See the time crate's documentation for more information. ",
                             "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                         )).format(&TIMESTAMP_FORMAT).unwrap()),
-                    Timestamps::UTC => format!("{} ", OffsetDateTime::now_utc()),
+                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc()),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
@@ -561,7 +561,7 @@ mod test {
     #[cfg(feature = "timestamps")]
     fn test_with_utc_timestamps() {
         let builder = SimpleLogger::new().with_utc_timestamps();
-        assert!(builder.timestamps == Timestamps::UTC);
+        assert!(builder.timestamps == Timestamps::Utc);
     }
 
     #[test]
