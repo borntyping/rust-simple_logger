@@ -33,9 +33,17 @@ name = "threads"
 required-features = ["threads"]
 
 [[example]]
+name = "timestamps_local"
+required-features = ["timestamps"]
+
+[[example]]
+name = "timestamps_none"
+required-features = ["timestamps"]
+
+[[example]]
 name = "timestamps_utc"
 required-features = ["timestamps"]
 
 [[example]]
-name = "timestamps_local"
+name = "timestamps_utc_offset"
 required-features = ["timestamps"]
