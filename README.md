@@ -2,11 +2,16 @@
 
 A logger that prints all messages with a readable output format.
 
-The output format is based on the format used by [Supervisord](http://supervisord.org/).
+The output format is based on the format used by [Supervisord](http://supervisord.org/), with timestamps in [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format.
 
 * [Source on GitHub](https://github.com/borntyping/rust-simple_logger)
 * [Packages on Crates.io](https://crates.io/crates/simple_logger)
 * [Documentation on Docs.rs](https://docs.rs/simple_logger)
+
+Breaking changes
+----------------
+
+- **Version 2.0.0 changes the default from displaying timestamps in the local timezone to displaying timestamps in UTC.** See issue [#52](https://github.com/borntyping/rust-simple_logger/issues/52) for more information.
 
 Usage
 -----
@@ -24,7 +29,7 @@ fn main() {
 This outputs:
 
 ```
-2015-02-24 01:05:20 WARN [logging_example] This is an example message.
+2022-01-19T17:27:07.013874956Z WARN [logging_example] This is an example message.
 ```
 
 You can run the above example with:
