@@ -35,12 +35,7 @@ use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
 #[cfg(feature = "timestamps")]
-use time::{format_description::FormatItem, OffsetDateTime};
-
-#[cfg(feature = "timestamps")]
-const TIMESTAMP_FORMAT: &[FormatItem] = time::macros::format_description!(
-    "[year]-[month]-[day] [hour]:[minute]:[second],[subsecond digits:3]"
-);
+use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
 
 #[cfg(feature = "timestamps")]
 #[derive(PartialEq)]
@@ -48,6 +43,7 @@ enum Timestamps {
     None,
     Local,
     Utc,
+    UtcOffset(UtcOffset),
 }
 
 /// Implements [`Log`] and a set of simple builder methods for configuration.
@@ -105,7 +101,7 @@ impl SimpleLogger {
             threads: false,
 
             #[cfg(feature = "timestamps")]
-            timestamps: Timestamps::Local,
+            timestamps: Timestamps::Utc,
 
             #[cfg(feature = "colored")]
             colors: true,
@@ -292,6 +288,16 @@ impl SimpleLogger {
         self
     }
 
+    /// Display timestamps using a static UTC offset.
+    ///
+    /// This method is only available if the `timestamps` feature is enabled.
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "timestamps")]
+    pub fn with_utc_offset(mut self, offset: UtcOffset) -> SimpleLogger {
+        self.timestamps = Timestamps::UtcOffset(offset);
+        self
+    }
+
     /// Control whether messages are colored or not.
     ///
     /// This method is only available if the `colored` feature is enabled.
@@ -408,13 +414,15 @@ impl Log for SimpleLogger {
                     Timestamps::None => "".to_string(),
                     Timestamps::Local => format!("{} ", OffsetDateTime::now_local().expect(concat!(
                             "Could not determine the UTC offset on this system. ",
+                            "Consider displaying UTC time instead. ",
                             "Possible causes are that the time crate does not implement \"local_offset_at\" ",
                             "on your system, or that you are running in a multi-threaded environment and ",
                             "the time crate is returning \"None\" from \"local_offset_at\" to avoid unsafe ",
                             "behaviour. See the time crate's documentation for more information. ",
                             "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
-                        )).format(&TIMESTAMP_FORMAT).unwrap()),
-                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT).unwrap()),
+                        )).format(&Rfc3339).unwrap()),
+                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&Rfc3339).unwrap()),
+                    Timestamps::UtcOffset(offset) => format!("{} ", OffsetDateTime::now_utc().to_offset(offset).format(&Rfc3339).unwrap()),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
@@ -476,6 +484,17 @@ fn set_up_color_terminal() {
 /// The `RUST_LOG` environment variable is not used.
 pub fn init() -> Result<(), SetLoggerError> {
     SimpleLogger::new().init()
+}
+
+/// Initialise the logger with it's default configuration.
+///
+/// Log messages will not be filtered.
+/// The `RUST_LOG` environment variable is not used.
+///
+/// This function is only available if the `timestamps` feature is enabled.
+#[cfg(feature = "timestamps")]
+pub fn init_utc() -> Result<(), SetLoggerError> {
+    SimpleLogger::new().with_utc_timestamps().init()
 }
 
 /// Initialise the logger with the `RUST_LOG` environment variable.
@@ -546,7 +565,7 @@ mod test {
     #[cfg(feature = "timestamps")]
     fn test_timestamps_defaults() {
         let builder = SimpleLogger::new();
-        assert!(builder.timestamps == Timestamps::Local);
+        assert!(builder.timestamps == Timestamps::Utc);
     }
 
     #[test]
