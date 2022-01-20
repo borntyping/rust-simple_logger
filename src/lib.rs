@@ -35,7 +35,17 @@ use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::collections::HashMap;
 #[cfg(feature = "timestamps")]
-use time::{format_description::well_known::Rfc3339, OffsetDateTime, UtcOffset};
+use time::{format_description::FormatItem, OffsetDateTime, UtcOffset};
+
+#[cfg(feature = "timestamps")]
+const TIMESTAMP_FORMAT_OFFSET: &[FormatItem] = time::macros::format_description!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3][offset_hour sign:mandatory]:[offset_minute]"
+);
+
+#[cfg(feature = "timestamps")]
+const TIMESTAMP_FORMAT_UTC: &[FormatItem] = time::macros::format_description!(
+    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]Z"
+);
 
 #[cfg(feature = "timestamps")]
 #[derive(PartialEq)]
@@ -420,9 +430,9 @@ impl Log for SimpleLogger {
                             "the time crate is returning \"None\" from \"local_offset_at\" to avoid unsafe ",
                             "behaviour. See the time crate's documentation for more information. ",
                             "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
-                        )).format(&Rfc3339).unwrap()),
-                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&Rfc3339).unwrap()),
-                    Timestamps::UtcOffset(offset) => format!("{} ", OffsetDateTime::now_utc().to_offset(offset).format(&Rfc3339).unwrap()),
+                        )).format(&TIMESTAMP_FORMAT_OFFSET).unwrap()),
+                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT_UTC).unwrap()),
+                    Timestamps::UtcOffset(offset) => format!("{} ", OffsetDateTime::now_utc().to_offset(offset).format(&TIMESTAMP_FORMAT_UTC).unwrap()),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
