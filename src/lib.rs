@@ -2,7 +2,7 @@
 //!
 //! Optional features include timestamps, colored output and logging to stderr.
 //!
-//! ```
+//! ```rust
 //! simple_logger::SimpleLogger::new().env().init().unwrap();
 //!
 //! log::warn!("This is an example message.");
@@ -12,19 +12,19 @@
 //!
 //! Just initialize logging without any configuration:
 //!
-//! ```
+//! ```rust
 //! simple_logger::init().unwrap();
 //! ```
 //!
 //! Set the log level from the `RUST_LOG` environment variable:
 //!
-//! ```
+//! ```rust
 //! simple_logger::init_with_env().unwrap();
 //! ```
 //!
 //! Hardcode a default log level:
 //!
-//! ```
+//! ```rust
 //! simple_logger::init_with_level(log::Level::Warn).unwrap();
 //! ```
 
@@ -488,7 +488,7 @@ fn set_up_color_terminal() {
     }
 }
 
-/// Initialise the logger with it's default configuration.
+/// Initialise the logger with its default configuration.
 ///
 /// Log messages will not be filtered.
 /// The `RUST_LOG` environment variable is not used.
@@ -496,7 +496,7 @@ pub fn init() -> Result<(), SetLoggerError> {
     SimpleLogger::new().init()
 }
 
-/// Initialise the logger with it's default configuration.
+/// Initialise the logger with its default configuration.
 ///
 /// Log messages will not be filtered.
 /// The `RUST_LOG` environment variable is not used.
