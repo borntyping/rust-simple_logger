@@ -28,13 +28,13 @@ fn main() {
 
 This outputs:
 
-```
+```txt
 2022-01-19T17:27:07.013874956Z WARN [logging_example] This is an example message.
 ```
 
 You can run the above example with:
 
-```bash
+```sh
 cargo run --example init
 ```
 
@@ -42,14 +42,14 @@ Coloured output and timestamps will be enabled by default. You can remove these
 features and their respective dependencies by disabling all features in your
 `Cargo.toml`.
 
-```
+```toml
 [dependencies.simple_logger]
 default-features = false
 ```
 
 To include the `timestamps` feature, but not the `colors` feature:
 
-```
+```toml
 [dependencies.simple_logger]
 default-features = false
 features = ["timestamps"]
@@ -57,7 +57,7 @@ features = ["timestamps"]
 
 To include the `colors` feature, but not the `timestamps` feature:
 
-```
+```toml
 [dependencies.simple_logger]
 default-features = false
 features = ["colors"]
@@ -65,7 +65,7 @@ features = ["colors"]
 
 To direct logging output to `stderr` use the `stderr` feature:
 
-```
+```toml
 [dependencies.simple_logger]
 features = ["stderr"]
 ```
