@@ -432,7 +432,7 @@ impl Log for SimpleLogger {
                             "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                         )).format(&TIMESTAMP_FORMAT_OFFSET).unwrap()),
                     Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT_UTC).unwrap()),
-                    Timestamps::UtcOffset(offset) => format!("{} ", OffsetDateTime::now_utc().to_offset(offset).format(&TIMESTAMP_FORMAT_UTC).unwrap()),
+                    Timestamps::UtcOffset(offset) => format!("{} ", OffsetDateTime::now_utc().to_offset(offset).format(&TIMESTAMP_FORMAT_OFFSET).unwrap()),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
