@@ -33,7 +33,7 @@
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
-use std::collections::HashMap;
+use std::{collections::HashMap, str::FromStr};
 #[cfg(feature = "timestamps")]
 use time::{format_description::FormatItem, OffsetDateTime, UtcOffset};
 
@@ -151,16 +151,13 @@ impl SimpleLogger {
     /// [`with_level`]: #method.with_level
     #[must_use = "You must call init() to begin logging"]
     pub fn env(mut self) -> SimpleLogger {
-        if let Ok(level) = std::env::var("RUST_LOG") {
-            match level.to_lowercase().as_str() {
-                "trace" => self.default_level = log::LevelFilter::Trace,
-                "debug" => self.default_level = log::LevelFilter::Debug,
-                "info" => self.default_level = log::LevelFilter::Info,
-                "warn" => self.default_level = log::LevelFilter::Warn,
-                "error" => self.default_level = log::LevelFilter::Error,
-                _ => (),
-            }
-        };
+        self.default_level = std::env::var("RUST_LOG")
+            .ok()
+            .as_deref()
+            .map(log::LevelFilter::from_str)
+            .and_then(Result::ok)
+            .unwrap_or(self.default_level);
+
         self
     }
 
