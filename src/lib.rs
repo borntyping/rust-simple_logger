@@ -146,7 +146,8 @@ impl SimpleLogger {
     /// Simulates env_logger behavior, which enables the user to choose log
     /// level by setting a `RUST_LOG` environment variable. This will use
     /// the default level set by [`with_level`] if `RUST_LOG` is not set or
-    /// can't be parsed as a standard log level.
+    /// can't be parsed as a standard log level. 
+    /// (if calling `with_level`, call this after that, otherwise it will have no effect)
     ///
     /// [`with_level`]: #method.with_level
     #[must_use = "You must call init() to begin logging"]
