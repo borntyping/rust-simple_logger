@@ -2,7 +2,7 @@
 
 A logger that prints all messages with a readable output format.
 
-The output format is based on the format used by [Supervisord](http://supervisord.org/), with timestamps in [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format.
+The output format is based on the format used by [Supervisord](https://github.com/Supervisor/supervisor), with timestamps in [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format.
 
 * [Source on GitHub](https://github.com/borntyping/rust-simple_logger)
 * [Packages on Crates.io](https://crates.io/crates/simple_logger)
