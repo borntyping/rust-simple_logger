@@ -468,11 +468,11 @@ fn set_up_color_terminal() {
 
     if atty::is(Stream::Stdout) {
         unsafe {
-            use winapi::um::consoleapi::*;
-            use winapi::um::handleapi::*;
-            use winapi::um::processenv::*;
-            use winapi::um::winbase::*;
-            use winapi::um::wincon::*;
+            use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
+            use windows_sys::Win32::System::Console::{
+                GetConsoleMode, GetStdHandle, SetConsoleMode, CONSOLE_MODE,
+                ENABLE_VIRTUAL_TERMINAL_PROCESSING, STD_OUTPUT_HANDLE,
+            };
 
             let stdout = GetStdHandle(STD_OUTPUT_HANDLE);
 
@@ -480,7 +480,7 @@ fn set_up_color_terminal() {
                 return;
             }
 
-            let mut mode: winapi::shared::minwindef::DWORD = 0;
+            let mut mode: CONSOLE_MODE = 0;
 
             if GetConsoleMode(stdout, &mut mode) == 0 {
                 return;
