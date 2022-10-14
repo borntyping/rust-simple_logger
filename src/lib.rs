@@ -33,6 +33,7 @@
 #[cfg(feature = "colored")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
+use once_cell::race::OnceBox;
 use std::{collections::HashMap, str::FromStr};
 #[cfg(feature = "timestamps")]
 use time::{format_description::FormatItem, OffsetDateTime, UtcOffset};
@@ -341,8 +342,11 @@ impl SimpleLogger {
         let max_level = max_level
             .map(|lvl| lvl.max(self.default_level))
             .unwrap_or(self.default_level);
+
+        static LOGGER: OnceBox<SimpleLogger> = OnceBox::new();
+        log::set_logger(LOGGER.get_or_init(|| Box::new(self)))?;
         log::set_max_level(max_level);
-        log::set_boxed_logger(Box::new(self))?;
+
         Ok(())
     }
 }
