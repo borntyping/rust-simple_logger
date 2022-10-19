@@ -375,19 +375,18 @@ impl Log for SimpleLogger {
                 {
                     if self.colors {
                         match record.level() {
-                            Level::Error => record.level().to_string().red().to_string(),
-                            Level::Warn => record.level().to_string().yellow().to_string(),
-                            Level::Info => record.level().to_string().cyan().to_string(),
-                            Level::Debug => record.level().to_string().purple().to_string(),
-                            Level::Trace => record.level().to_string().normal().to_string(),
-                        }
+                            Level::Error => format!("{:<5}",record.level().to_string()).red().to_string(),
+                            Level::Warn  => format!("{:<5}",record.level().to_string()).yellow().to_string(),
+                            Level::Info  => format!("{:<5}",record.level().to_string()).cyan().to_string(),
+                            Level::Debug => format!("{:<5}",record.level().to_string()).purple().to_string(),
+                            Level::Trace => format!("{:<5}",record.level().to_string()).normal().to_string(),                        }
                     } else {
-                        record.level().to_string()
+                        format!("{:<5}", record.level().to_string())
                     }
                 }
                 #[cfg(not(feature = "colored"))]
                 {
-                    record.level().to_string()
+                    format!("{:<5}", record.level().to_string())
                 }
             };
 
@@ -443,7 +442,7 @@ impl Log for SimpleLogger {
             };
 
             let message = format!(
-                "{}{:<5} [{}{}] {}",
+                "{}{} [{}{}] {}",
                 timestamp,
                 level_string,
                 target,
