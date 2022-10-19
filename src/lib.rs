@@ -43,9 +43,8 @@ const TIMESTAMP_FORMAT_OFFSET: &[FormatItem] = time::macros::format_description!
 );
 
 #[cfg(feature = "timestamps")]
-const TIMESTAMP_FORMAT_UTC: &[FormatItem] = time::macros::format_description!(
-    "[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]Z"
-);
+const TIMESTAMP_FORMAT_UTC: &[FormatItem] =
+    time::macros::format_description!("[year]-[month]-[day]T[hour]:[minute]:[second].[subsecond digits:3]Z");
 
 #[cfg(feature = "timestamps")]
 #[derive(PartialEq)]
@@ -138,9 +137,7 @@ impl SimpleLogger {
         note = "Use [`env`](#method.env) instead. Will be removed in version 2.0.0."
     )]
     pub fn from_env() -> SimpleLogger {
-        SimpleLogger::new()
-            .with_level(log::LevelFilter::Error)
-            .env()
+        SimpleLogger::new().with_level(log::LevelFilter::Error).env()
     }
 
     /// Simulates env_logger behavior, which enables the user to choose log
@@ -226,10 +223,7 @@ impl SimpleLogger {
         since = "1.11.0",
         note = "Use [`with_module_level`](#method.with_module_level) instead. Will be removed in version 2.0.0."
     )]
-    pub fn with_target_levels(
-        mut self,
-        target_levels: HashMap<String, LevelFilter>,
-    ) -> SimpleLogger {
+    pub fn with_target_levels(mut self, target_levels: HashMap<String, LevelFilter>) -> SimpleLogger {
         self.module_levels = target_levels.into_iter().collect();
 
         /* Normally this is only called in `init` to avoid redundancy, but we can't initialize the logger in tests */
@@ -332,12 +326,7 @@ impl SimpleLogger {
          */
         self.module_levels
             .sort_by_key(|(name, _level)| name.len().wrapping_neg());
-        let max_level = self
-            .module_levels
-            .iter()
-            .map(|(_name, level)| level)
-            .copied()
-            .max();
+        let max_level = self.module_levels.iter().map(|(_name, level)| level).copied().max();
         let max_level = max_level
             .map(|lvl| lvl.max(self.default_level))
             .unwrap_or(self.default_level);
@@ -375,11 +364,12 @@ impl Log for SimpleLogger {
                 {
                     if self.colors {
                         match record.level() {
-                            Level::Error => format!("{:<5}",record.level().to_string()).red().to_string(),
-                            Level::Warn  => format!("{:<5}",record.level().to_string()).yellow().to_string(),
-                            Level::Info  => format!("{:<5}",record.level().to_string()).cyan().to_string(),
-                            Level::Debug => format!("{:<5}",record.level().to_string()).purple().to_string(),
-                            Level::Trace => format!("{:<5}",record.level().to_string()).normal().to_string(),                        }
+                            Level::Error => format!("{:<5}", record.level().to_string()).red().to_string(),
+                            Level::Warn => format!("{:<5}", record.level().to_string()).yellow().to_string(),
+                            Level::Info => format!("{:<5}", record.level().to_string()).cyan().to_string(),
+                            Level::Debug => format!("{:<5}", record.level().to_string()).purple().to_string(),
+                            Level::Trace => format!("{:<5}", record.level().to_string()).normal().to_string(),
+                        }
                     } else {
                         format!("{:<5}", record.level().to_string())
                     }
@@ -424,31 +414,36 @@ impl Log for SimpleLogger {
                 #[cfg(feature = "timestamps")]
                 match self.timestamps {
                     Timestamps::None => "".to_string(),
-                    Timestamps::Local => format!("{} ", OffsetDateTime::now_local().expect(concat!(
-                            "Could not determine the UTC offset on this system. ",
-                            "Consider displaying UTC time instead. ",
-                            "Possible causes are that the time crate does not implement \"local_offset_at\" ",
-                            "on your system, or that you are running in a multi-threaded environment and ",
-                            "the time crate is returning \"None\" from \"local_offset_at\" to avoid unsafe ",
-                            "behaviour. See the time crate's documentation for more information. ",
-                            "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
-                        )).format(&TIMESTAMP_FORMAT_OFFSET).unwrap()),
+                    Timestamps::Local => format!(
+                        "{} ",
+                        OffsetDateTime::now_local()
+                            .expect(concat!(
+                                "Could not determine the UTC offset on this system. ",
+                                "Consider displaying UTC time instead. ",
+                                "Possible causes are that the time crate does not implement \"local_offset_at\" ",
+                                "on your system, or that you are running in a multi-threaded environment and ",
+                                "the time crate is returning \"None\" from \"local_offset_at\" to avoid unsafe ",
+                                "behaviour. See the time crate's documentation for more information. ",
+                                "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
+                            ))
+                            .format(&TIMESTAMP_FORMAT_OFFSET)
+                            .unwrap()
+                    ),
                     Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT_UTC).unwrap()),
-                    Timestamps::UtcOffset(offset) => format!("{} ", OffsetDateTime::now_utc().to_offset(offset).format(&TIMESTAMP_FORMAT_OFFSET).unwrap()),
+                    Timestamps::UtcOffset(offset) => format!(
+                        "{} ",
+                        OffsetDateTime::now_utc()
+                            .to_offset(offset)
+                            .format(&TIMESTAMP_FORMAT_OFFSET)
+                            .unwrap()
+                    ),
                 }
 
                 #[cfg(not(feature = "timestamps"))]
                 ""
             };
 
-            let message = format!(
-                "{}{} [{}{}] {}",
-                timestamp,
-                level_string,
-                target,
-                thread,
-                record.args()
-            );
+            let message = format!("{}{} [{}{}] {}", timestamp, level_string, target, thread, record.args());
 
             #[cfg(not(feature = "stderr"))]
             println!("{}", message);
@@ -521,9 +516,7 @@ pub fn init_with_env() -> Result<(), SetLoggerError> {
 /// Log messages below the given [`Level`] will be filtered.
 /// The `RUST_LOG` environment variable is not used.
 pub fn init_with_level(level: Level) -> Result<(), SetLoggerError> {
-    SimpleLogger::new()
-        .with_level(level.to_level_filter())
-        .init()
+    SimpleLogger::new().with_level(level.to_level_filter()).init()
 }
 
 /// Use [`init_with_env`] instead.
