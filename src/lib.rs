@@ -81,6 +81,8 @@ pub struct SimpleLogger {
     /// This field is only available if the `timestamps` feature is enabled.
     #[cfg(feature = "timestamps")]
     timestamps: Timestamps,
+    #[cfg(feature = "timestamps")]
+    timeformat: &'static [FormatItem<'static>],
 
     /// Whether to use color output or not.
     ///
@@ -111,6 +113,7 @@ impl SimpleLogger {
 
             #[cfg(feature = "timestamps")]
             timestamps: Timestamps::Utc,
+            timeformat: TIMESTAMP_FORMAT_OFFSET,
 
             #[cfg(feature = "colored")]
             colors: true,
@@ -262,6 +265,26 @@ impl SimpleLogger {
         } else {
             self.timestamps = Timestamps::None
         }
+        self
+    }
+
+    /// Custom timestamps format
+    ///
+    /// The syntax for the format_description macro can be found in the
+    /// [`time` crate book](https://time-rs.github.io/book/api/format-description.html).
+    ///
+    /// ```
+    /// simple_logger::SimpleLogger::new()
+    ///  .with_level(log::LevelFilter::Debug)
+    ///  .env()
+    ///  .with_custom_timestamps(time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
+    ///  .init()
+    ///  .unwrap();
+    /// ```
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "timestamps")]
+    pub fn with_custom_timestamps(mut self, timeformat: &'static [FormatItem<'static>]) -> SimpleLogger {
+        self.timeformat = timeformat;
         self
     }
 
@@ -426,7 +449,7 @@ impl Log for SimpleLogger {
                                 "behaviour. See the time crate's documentation for more information. ",
                                 "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                             ))
-                            .format(&TIMESTAMP_FORMAT_OFFSET)
+                            .format(&self.timeformat)
                             .unwrap()
                     ),
                     Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT_UTC).unwrap()),
@@ -434,7 +457,7 @@ impl Log for SimpleLogger {
                         "{} ",
                         OffsetDateTime::now_utc()
                             .to_offset(offset)
-                            .format(&TIMESTAMP_FORMAT_OFFSET)
+                            .format(&self.timeformat)
                             .unwrap()
                     ),
                 }
