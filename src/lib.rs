@@ -346,6 +346,7 @@ impl SimpleLogger {
         set_up_color_terminal();
 
         // Set default timestamp format
+        #[cfg(feature = "timestamps")]
         if self.timeformat.len() <= 0 {
             self.timeformat = match self.timestamps {
                 Timestamps::Local => TIMESTAMP_FORMAT_OFFSET,
