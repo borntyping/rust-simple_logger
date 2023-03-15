@@ -114,7 +114,7 @@ impl SimpleLogger {
             #[cfg(feature = "timestamps")]
             timestamps: Timestamps::Utc,
             #[cfg(feature = "timestamps")]
-            timeformat: TIMESTAMP_FORMAT_OFFSET,
+            timeformat: time::macros::format_description!(""),
 
             #[cfg(feature = "colored")]
             colors: true,
@@ -345,6 +345,16 @@ impl SimpleLogger {
         #[cfg(all(windows, feature = "colored"))]
         set_up_color_terminal();
 
+        // Set default timestamp format
+        if self.timeformat.len() <= 0 {
+            self.timeformat = match self.timestamps {
+                Timestamps::Local => TIMESTAMP_FORMAT_OFFSET,
+                Timestamps::Utc => TIMESTAMP_FORMAT_UTC,
+                Timestamps::UtcOffset(_) => TIMESTAMP_FORMAT_OFFSET,
+                _ => self.timeformat,
+            };
+        }
+
         /* Sort all module levels from most specific to least specific. The length of the module
          * name is used instead of its actual depth to avoid module name parsing.
          */
@@ -453,7 +463,7 @@ impl Log for SimpleLogger {
                             .format(&self.timeformat)
                             .unwrap()
                     ),
-                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&TIMESTAMP_FORMAT_UTC).unwrap()),
+                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&self.timeformat).unwrap()),
                     Timestamps::UtcOffset(offset) => format!(
                         "{} ",
                         OffsetDateTime::now_utc()
