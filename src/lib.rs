@@ -113,6 +113,7 @@ impl SimpleLogger {
 
             #[cfg(feature = "timestamps")]
             timestamps: Timestamps::Utc,
+            #[cfg(feature = "timestamps")]
             timeformat: TIMESTAMP_FORMAT_OFFSET,
 
             #[cfg(feature = "colored")]
