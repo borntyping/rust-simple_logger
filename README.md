@@ -2,7 +2,7 @@
 
 A logger that prints all messages with a readable output format.
 
-The output format is based on the format used by [Supervisord](https://github.com/Supervisor/supervisor), with timestamps in default [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format and custom format.
+The output format is based on the format used by [Supervisord](https://github.com/Supervisor/supervisor), with timestamps default [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format. The format used for timestamps can be customised.
 
 * [Source on GitHub](https://github.com/borntyping/rust-simple_logger)
 * [Packages on Crates.io](https://crates.io/crates/simple_logger)
@@ -38,7 +38,7 @@ You can run the above example with:
 cargo run --example init
 ```
 
-Coloured output and timestamps will be enabled by default. You can remove these
+The `colors` and `timestamps` features are enabled by default. You can remove these
 features and their respective dependencies by disabling all features in your
 `Cargo.toml`.
 
@@ -63,6 +63,13 @@ default-features = false
 features = ["colors"]
 ```
 
+To include thread metadata use the `threads` and `nightly` features:
+
+```toml
+[dependencies.simple_logger]
+features = ["threads", "nightly"]
+```
+
 To direct logging output to `stderr` use the `stderr` feature:
 
 ```toml
@@ -70,7 +77,12 @@ To direct logging output to `stderr` use the `stderr` feature:
 features = ["stderr"]
 ```
 
-This can be combined with any other feature.
+Multiple features can be combined.
+
+```toml
+[dependencies.simple_logger]
+features = ["colors", "threads", "timestamps", "nightly", "stderr"]
+```
 
 Licence
 -------
