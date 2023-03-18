@@ -113,7 +113,7 @@ impl SimpleLogger {
 
             #[cfg(feature = "timestamps")]
             timestamps: Timestamps::Utc,
-                
+
             #[cfg(feature = "timestamps")]
             timeformat: None,
 
@@ -623,6 +623,15 @@ mod test {
     fn test_with_local_timestamps() {
         let builder = SimpleLogger::new().with_local_timestamps();
         assert!(builder.timestamps == Timestamps::Local);
+    }
+
+    #[test]
+    #[cfg(feature = "timestamps")]
+    #[allow(deprecated)]
+    fn test_with_timeformat() {
+        let builder =
+            SimpleLogger::new().with_custom_timestamps(time::macros::format_description!("[hour]:[minute]:[second]"));
+        assert!(builder.timeformat.is_some());
     }
 
     #[test]
