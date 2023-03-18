@@ -4,7 +4,7 @@ use time::macros::format_description;
 fn main() {
     SimpleLogger::new()
         .env()
-        .with_custom_timestamps(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
+        .with_timestamp_format(format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
         .init()
         .unwrap();
 

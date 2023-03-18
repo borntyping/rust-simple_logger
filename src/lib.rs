@@ -82,7 +82,7 @@ pub struct SimpleLogger {
     #[cfg(feature = "timestamps")]
     timestamps: Timestamps,
     #[cfg(feature = "timestamps")]
-    timeformat: Option<&'static [FormatItem<'static>]>,
+    timestamps_format: Option<&'static [FormatItem<'static>]>,
 
     /// Whether to use color output or not.
     ///
@@ -115,7 +115,7 @@ impl SimpleLogger {
             timestamps: Timestamps::Utc,
 
             #[cfg(feature = "timestamps")]
-            timeformat: None,
+            timestamps_format: None,
 
             #[cfg(feature = "colored")]
             colors: true,
@@ -270,7 +270,9 @@ impl SimpleLogger {
         self
     }
 
-    /// Custom timestamps format
+    /// Control the format used for timestamps.
+    ///
+    /// Without this, a default format is used depending on the timestamps type.
     ///
     /// The syntax for the format_description macro can be found in the
     /// [`time` crate book](https://time-rs.github.io/book/api/format-description.html).
@@ -279,14 +281,14 @@ impl SimpleLogger {
     /// simple_logger::SimpleLogger::new()
     ///  .with_level(log::LevelFilter::Debug)
     ///  .env()
-    ///  .with_custom_timestamps(time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
+    ///  .with_timestamp_format(time::macros::format_description!("[year]-[month]-[day] [hour]:[minute]:[second]"))
     ///  .init()
     ///  .unwrap();
     /// ```
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "timestamps")]
-    pub fn with_custom_timestamps(mut self, timeformat: &'static [FormatItem<'static>]) -> SimpleLogger {
-        self.timeformat = Some(timeformat);
+    pub fn with_timestamp_format(mut self, format: &'static [FormatItem<'static>]) -> SimpleLogger {
+        self.timestamps_format = Some(format);
         self
     }
 
@@ -451,20 +453,20 @@ impl Log for SimpleLogger {
                                 "behaviour. See the time crate's documentation for more information. ",
                                 "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                             ))
-                            .format(&self.timeformat.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
+                            .format(&self.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
                             .unwrap()
                     ),
                     Timestamps::Utc => format!(
                         "{} ",
                         OffsetDateTime::now_utc()
-                            .format(&self.timeformat.unwrap_or(TIMESTAMP_FORMAT_UTC))
+                            .format(&self.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_UTC))
                             .unwrap()
                     ),
                     Timestamps::UtcOffset(offset) => format!(
                         "{} ",
                         OffsetDateTime::now_utc()
                             .to_offset(offset)
-                            .format(&self.timeformat.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
+                            .format(&self.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
                             .unwrap()
                     ),
                 }
@@ -628,10 +630,10 @@ mod test {
     #[test]
     #[cfg(feature = "timestamps")]
     #[allow(deprecated)]
-    fn test_with_timeformat() {
+    fn test_with_timestamps_format() {
         let builder =
-            SimpleLogger::new().with_custom_timestamps(time::macros::format_description!("[hour]:[minute]:[second]"));
-        assert!(builder.timeformat.is_some());
+            SimpleLogger::new().with_timestamp_format(time::macros::format_description!("[hour]:[minute]:[second]"));
+        assert!(builder.timestamps_format.is_some());
     }
 
     #[test]
