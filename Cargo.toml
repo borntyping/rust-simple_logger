@@ -47,3 +47,7 @@ required-features = ["timestamps"]
 [[example]]
 name = "timestamps_utc_offset"
 required-features = ["timestamps"]
+
+[[example]]
+name = "timestamps_format"
+required-features = ["timestamps"]
