@@ -82,7 +82,7 @@ pub struct SimpleLogger {
     #[cfg(feature = "timestamps")]
     timestamps: Timestamps,
     #[cfg(feature = "timestamps")]
-    timeformat: &'static [FormatItem<'static>],
+    timeformat: Option<&'static [FormatItem<'static>]>,
 
     /// Whether to use color output or not.
     ///
@@ -113,8 +113,9 @@ impl SimpleLogger {
 
             #[cfg(feature = "timestamps")]
             timestamps: Timestamps::Utc,
+                
             #[cfg(feature = "timestamps")]
-            timeformat: time::macros::format_description!(""),
+            timeformat: None,
 
             #[cfg(feature = "colored")]
             colors: true,
@@ -285,7 +286,7 @@ impl SimpleLogger {
     #[must_use = "You must call init() to begin logging"]
     #[cfg(feature = "timestamps")]
     pub fn with_custom_timestamps(mut self, timeformat: &'static [FormatItem<'static>]) -> SimpleLogger {
-        self.timeformat = timeformat;
+        self.timeformat = Some(timeformat);
         self
     }
 
@@ -344,17 +345,6 @@ impl SimpleLogger {
     pub fn init(mut self) -> Result<(), SetLoggerError> {
         #[cfg(all(windows, feature = "colored"))]
         set_up_color_terminal();
-
-        // Set default timestamp format
-        #[cfg(feature = "timestamps")]
-        if self.timeformat.len() <= 0 {
-            self.timeformat = match self.timestamps {
-                Timestamps::Local => TIMESTAMP_FORMAT_OFFSET,
-                Timestamps::Utc => TIMESTAMP_FORMAT_UTC,
-                Timestamps::UtcOffset(_) => TIMESTAMP_FORMAT_OFFSET,
-                _ => self.timeformat,
-            };
-        }
 
         /* Sort all module levels from most specific to least specific. The length of the module
          * name is used instead of its actual depth to avoid module name parsing.
@@ -461,15 +451,20 @@ impl Log for SimpleLogger {
                                 "behaviour. See the time crate's documentation for more information. ",
                                 "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                             ))
-                            .format(&self.timeformat)
+                            .format(&self.timeformat.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
                             .unwrap()
                     ),
-                    Timestamps::Utc => format!("{} ", OffsetDateTime::now_utc().format(&self.timeformat).unwrap()),
+                    Timestamps::Utc => format!(
+                        "{} ",
+                        OffsetDateTime::now_utc()
+                            .format(&self.timeformat.unwrap_or(TIMESTAMP_FORMAT_UTC))
+                            .unwrap()
+                    ),
                     Timestamps::UtcOffset(offset) => format!(
                         "{} ",
                         OffsetDateTime::now_utc()
                             .to_offset(offset)
-                            .format(&self.timeformat)
+                            .format(&self.timeformat.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
                             .unwrap()
                     ),
                 }
