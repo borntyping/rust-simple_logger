@@ -490,9 +490,9 @@ impl Log for SimpleLogger {
 
 #[cfg(all(windows, feature = "colored"))]
 fn set_up_color_terminal() {
-    use atty::Stream;
+    use std::io::{stdout, IsTerminal};
 
-    if atty::is(Stream::Stdout) {
+    if stdout().is_terminal() {
         unsafe {
             use windows_sys::Win32::Foundation::INVALID_HANDLE_VALUE;
             use windows_sys::Win32::System::Console::{
