@@ -1,6 +1,6 @@
 [package]
 name = "simple_logger"
-version = "4.1.0"
+version = "4.2.0"
 license = "MIT"
 authors = ["Sam Clements <sam@borntyping.co.uk>"]
 description = "A logger that prints all messages with a readable output format"
