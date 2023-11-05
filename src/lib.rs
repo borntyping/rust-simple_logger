@@ -89,6 +89,9 @@ pub struct SimpleLogger {
     /// This field is only available if the `color` feature is enabled.
     #[cfg(feature = "colored")]
     colors: bool,
+
+    /// The backend used to log messages.
+    backend: Box<dyn LogBackend>,
 }
 
 impl SimpleLogger {
@@ -119,6 +122,7 @@ impl SimpleLogger {
 
             #[cfg(feature = "colored")]
             colors: true,
+            backend: Box::new(DefaultLogBackend::new()),
         }
     }
 
@@ -342,6 +346,13 @@ impl SimpleLogger {
         self
     }
 
+    /// Set the backend used to log messages.
+    #[must_use = "You must call init() to begin logging"]
+    pub fn with_backend(mut self, backend: Box<dyn LogBackend>) -> SimpleLogger {
+        self.backend = backend;
+        self
+    }
+
     /// 'Init' the actual logger, instantiate it and configure it,
     /// this method MUST be called in order for the logger to be effective.
     pub fn init(mut self) -> Result<(), SetLoggerError> {
@@ -477,11 +488,7 @@ impl Log for SimpleLogger {
 
             let message = format!("{}{} [{}{}] {}", timestamp, level_string, target, thread, record.args());
 
-            #[cfg(not(feature = "stderr"))]
-            println!("{}", message);
-
-            #[cfg(feature = "stderr")]
-            eprintln!("{}", message);
+            self.backend.log(message);
         }
     }
 
@@ -514,6 +521,35 @@ fn set_up_color_terminal() {
 
             SetConsoleMode(stdout, mode | ENABLE_VIRTUAL_TERMINAL_PROCESSING);
         }
+    }
+}
+
+/// A trait for logging messages.
+///
+/// We use this trait to allow the user to choose the backend used to log messages.
+pub trait LogBackend: Send + Sync {
+    fn log(&self, message: String);
+}
+
+/// The default backend used by [`SimpleLogger`].
+///
+/// This backend logs messages to stdout or stderr.
+#[derive(PartialEq, Eq)]
+pub struct DefaultLogBackend;
+
+impl DefaultLogBackend {
+    pub fn new() -> Self {
+        DefaultLogBackend
+    }
+}
+
+impl LogBackend for DefaultLogBackend {
+    fn log(&self, message: String) {
+        #[cfg(not(feature = "stderr"))]
+        println!("{}", message);
+
+        #[cfg(feature = "stderr")]
+        eprintln!("{}", message);
     }
 }
 
@@ -564,6 +600,8 @@ pub fn init_by_env() {
 
 #[cfg(test)]
 mod test {
+    use std::sync::{Arc, Mutex};
+
     use super::*;
 
     #[test]
@@ -644,6 +682,38 @@ mod test {
 
         builder = builder.with_colors(false);
         assert!(builder.colors == false);
+    }
+
+    #[test]
+    fn test_with_custom_backend() {
+        let result_collection: Arc<Mutex<Vec<String>>> = Arc::new(Mutex::new(Vec::new()));
+
+        struct CustomLogBackend {
+            results: Arc<Mutex<Vec<String>>>,
+        }
+
+        impl LogBackend for CustomLogBackend {
+            fn log(&self, message: String) {
+                self.results
+                    .lock()
+                    .unwrap()
+                    .push(format!("[Custom log backend] {}", message));
+            }
+        }
+
+        impl CustomLogBackend {
+            fn new(results: Arc<Mutex<Vec<String>>>) -> Box<Self> {
+                Box::new(Self { results })
+            }
+        }
+
+        let backend = CustomLogBackend::new(Arc::clone(&result_collection));
+
+        let logger = SimpleLogger::new().with_backend(backend);
+        logger.backend.log("Test message".to_string());
+
+        assert!(result_collection.lock().unwrap().len() == 1);
+        assert!(result_collection.lock().unwrap()[0] == "[Custom log backend] Test message");
     }
 
     fn create_log(name: &str, level: Level) -> Metadata {

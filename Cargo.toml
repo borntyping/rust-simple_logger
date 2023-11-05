@@ -28,6 +28,9 @@ name = "colors"
 required-features = ["colors"]
 
 [[example]]
+name = "custom_log_backend"
+
+[[example]]
 name = "threads"
 required-features = ["threads"]
 
