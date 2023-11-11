@@ -407,11 +407,12 @@ impl Log for SimpleLogger {
                 }
             };
 
-            let target = if !record.target().is_empty() {
-                record.target()
+            let target = if record.target().is_empty() || record.target() == record.module_path().unwrap_or_default() {
+                "".to_string()
             } else {
-                record.module_path().unwrap_or_default()
+                format!("({})", record.target())
             };
+            let module = format!("{}:{}", record.module_path().unwrap_or_default(), record.line().unwrap_or_default());
 
             let thread = {
                 #[cfg(feature = "threads")]
@@ -475,7 +476,7 @@ impl Log for SimpleLogger {
                 ""
             };
 
-            let message = format!("{}{} [{}{}] {}", timestamp, level_string, target, thread, record.args());
+            let message = format!("{}{} [{}{}]{} {}", timestamp, level_string, module, thread, target, record.args());
 
             #[cfg(not(feature = "stderr"))]
             println!("{}", message);
