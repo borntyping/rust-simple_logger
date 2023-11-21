@@ -341,24 +341,28 @@ impl SimpleLogger {
         self
     }
 
-    /// 'Init' the actual logger, instantiate it and configure it,
-    /// this method MUST be called in order for the logger to be effective.
-    pub fn init(mut self) -> Result<(), SetLoggerError> {
-        #[cfg(all(windows, feature = "colored"))]
-        set_up_color_terminal();
-
+    /// Configure the logger
+    pub fn max_level(&mut self) -> LevelFilter {
         /* Sort all module levels from most specific to least specific. The length of the module
          * name is used instead of its actual depth to avoid module name parsing.
          */
         self.module_levels
             .sort_by_key(|(name, _level)| name.len().wrapping_neg());
         let max_level = self.module_levels.iter().map(|(_name, level)| level).copied().max();
-        let max_level = max_level
+        max_level
             .map(|lvl| lvl.max(self.default_level))
-            .unwrap_or(self.default_level);
+            .unwrap_or(self.default_level)
+    }
+
+    /// 'Init' the actual logger and instantiate it,
+    /// this method MUST be called in order for the logger to be effective.
+    pub fn init(mut self) -> Result<(), SetLoggerError> {
+        #[cfg(all(windows, feature = "colored"))]
+        set_up_color_terminal();
+
+        let max_level = self.max_level();
         log::set_max_level(max_level);
-        log::set_boxed_logger(Box::new(self))?;
-        Ok(())
+        log::set_boxed_logger(Box::new(self))
     }
 }
 
@@ -488,7 +492,7 @@ impl Log for SimpleLogger {
 }
 
 #[cfg(all(windows, feature = "colored"))]
-fn set_up_color_terminal() {
+pub fn set_up_color_terminal() {
     use std::io::{stdout, IsTerminal};
 
     if stdout().is_terminal() {
