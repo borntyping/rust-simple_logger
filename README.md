@@ -84,6 +84,27 @@ Multiple features can be combined.
 features = ["colors", "threads", "timestamps", "nightly", "stderr"]
 ```
 
+Wrapping with another logger
+----------------------------
+
+Users that might want to wrap this logger to be able to catch log events for various 
+reasons can setup the logger as follows:
+
+On windows machines:
+```rust
+let logger = SimpleLogger::new();
+set_up_color_terminal();
+let max_level = logger.max_level(); 
+```
+
+Otherwise:
+```rust
+let logger = SimpleLogger::new();
+let max_level = logger.max_level();
+```
+
+The user can then themselves call `log::set_max_level` and `log::set_boxed_logger` or equivalent as they wish.
+
 Licence
 -------
 
