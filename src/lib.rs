@@ -122,9 +122,8 @@ impl SimpleLogger {
         }
     }
 
-    /// Simulates env_logger behavior, which enables the user to choose log level by
-    /// setting a `RUST_LOG` environment variable. The `RUST_LOG` is not set or its value is not
-    /// recognized as one of the log levels, this function will use the `Error` level by default.
+    /// Initializes the global logger with log level read from `RUST_LOG` environment
+    /// variable value. Deprecated in favor of `env()`.
     ///
     /// You may use the various builder-style methods on this type to configure
     /// the logger, and you must call [`init`] in order to start logging messages.
@@ -145,10 +144,10 @@ impl SimpleLogger {
         SimpleLogger::new().with_level(log::LevelFilter::Error).env()
     }
 
-    /// Simulates env_logger behavior, which enables the user to choose log
-    /// level by setting a `RUST_LOG` environment variable. This will use
-    /// the default level set by [`with_level`] if `RUST_LOG` is not set or
-    /// can't be parsed as a standard log level.
+    /// Enables the user to choose log level by setting `RUST_LOG=<level>`
+    /// environment variable. This will use the default level set by
+    /// [`with_level`] if `RUST_LOG` is not set or can't be parsed as a 
+    /// standard log level.
     ///
     /// This must be called after [`with_level`]. If called before
     /// [`with_level`], it will have no effect.
