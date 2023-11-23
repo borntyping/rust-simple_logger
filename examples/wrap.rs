@@ -1,8 +1,8 @@
-use simple_logger::{SimpleLogger, set_up_color_terminal};
 use log::{Log, Metadata, Record};
+use simple_logger::{set_up_color_terminal, SimpleLogger};
 
 struct WrapperLogger {
-    simple_logger: SimpleLogger
+    simple_logger: SimpleLogger,
 }
 
 impl Log for WrapperLogger {

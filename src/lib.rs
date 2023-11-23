@@ -350,7 +350,9 @@ impl SimpleLogger {
         levels.sort_by_key(|(name, _level)| name.len().wrapping_neg());
 
         let max_level = self.module_levels.iter().map(|(_name, level)| level).copied().max();
-        max_level.map(|lvl| lvl.max(self.default_level)).unwrap_or(self.default_level)
+        max_level
+            .map(|lvl| lvl.max(self.default_level))
+            .unwrap_or(self.default_level)
     }
 
     /// 'Init' the actual logger and instantiate it,
@@ -525,7 +527,7 @@ pub fn set_up_color_terminal() {
 ///
 /// This method does nothing if not running on Windows with the colored feature.
 #[cfg(not(all(windows, feature = "colored")))]
-pub fn set_up_color_terminal() { }
+pub fn set_up_color_terminal() {}
 
 /// Initialise the logger with its default configuration.
 ///
