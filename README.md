@@ -2,14 +2,26 @@
 
 A logger that prints all messages with a readable output format.
 
-The output format is based on the format used by [Supervisord](https://github.com/Supervisor/supervisor), with timestamps default [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format. The format used for timestamps can be customised.
+The output format is based on the format used by [Supervisord](https://github.com/Supervisor/supervisor), with timestamps in [RFC 3339](https://datatracker.ietf.org/doc/html/rfc3339) format.
+
+The format and timezone used for timestamps can be customised, simple colours based on log level can be enabled, thread metadata can be included, and output can be toggled between STDOUT and STDERR. 
 
 * [Source on GitHub](https://github.com/borntyping/rust-simple_logger)
 * [Packages on Crates.io](https://crates.io/crates/simple_logger)
 * [Documentation on Docs.rs](https://docs.rs/simple_logger)
 
-Breaking changes
-----------------
+Notices
+-------
+
+### Project status
+
+I wrote the initial version of this library in 2015, and haven't written Rust professionally since then.
+I consider this as close as I'll ever get to a "finished" project and don't plan on adding any more features to it.
+
+It is still maintained and I try and merge pull requests for fixes, improvements, and features; though I generally turn down pull requests for large or complex features that go outside the library's aim to be a simple logger.
+If you need more, the `log` module has a list of [available logging implementations](https://docs.rs/log/latest/log/#available-logging-implementations), or you could consider forking `simple_logger` and building on top of it.
+
+### Breaking changes
 
 - **Version 2.0.0 changes the default from displaying timestamps in the local timezone to displaying timestamps in UTC.** See issue [#52](https://github.com/borntyping/rust-simple_logger/issues/52) for more information.
 
