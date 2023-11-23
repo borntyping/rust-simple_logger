@@ -1,4 +1,4 @@
-# simple_logger [![](https://img.shields.io/github/tag/borntyping/rust-simple_logger.svg)](https://github.com/borntyping/rust-simple_logger/tags) [![](https://img.shields.io/travis/borntyping/rust-simple_logger.svg)](https://travis-ci.org/borntyping/rust-simple_logger) [![](https://img.shields.io/github/issues/borntyping/rust-simple_logger.svg)](https://github.com/borntyping/rust-simple_logger/issues)
+# simple_logger [![](https://img.shields.io/github/tag/borntyping/rust-simple_logger.svg)](https://github.com/borntyping/rust-simple_logger/tags)
 
 A logger that prints all messages with a readable output format.
 
@@ -37,6 +37,8 @@ You can run the above example with:
 ```sh
 cargo run --example init
 ```
+
+### Optional features
 
 The `colors` and `timestamps` features are enabled by default. You can remove these
 features and their respective dependencies by disabling all features in your
@@ -84,26 +86,28 @@ Multiple features can be combined.
 features = ["colors", "threads", "timestamps", "nightly", "stderr"]
 ```
 
-Wrapping with another logger
-----------------------------
+### Wrapping with another logger
 
-Users that might want to wrap this logger to be able to catch log events for various 
-reasons can setup the logger as follows:
+You might want to wrap this logger to do your own processing before handing events to a SimpleLogger instance. Instead
+of calling `init()` which calls `log::set_max_level` and `log::set_boxed_logger`, you can call those functions directly
+giving you the chance to wrap or adjust the logger. See [wrap.rs](examples/wrap.rs) for a more detailed example.
 
-On windows machines:
+The call to `set_up_color_terminal()` is currently only needed on Windows when the `colored` feature is enabled. If
+you're not on Windows and not using the `colored` feature, it will do nothing. 
+
 ```rust
-let logger = SimpleLogger::new();
-set_up_color_terminal();
-let max_level = logger.max_level(); 
-```
+use simple_logger::{SimpleLogger, set_up_color_terminal};
 
-Otherwise:
-```rust
-let logger = SimpleLogger::new();
-let max_level = logger.max_level();
-```
+fn main() {
+    set_up_color_terminal();
 
-The user can then themselves call `log::set_max_level` and `log::set_boxed_logger` or equivalent as they wish.
+    let logger = SimpleLogger::new();
+    let max_level = logger.max_level();
+
+    log::set_max_level(max_level);
+    log::set_boxed_logger(Box::new(logger)).unwrap();
+}
+```
 
 Licence
 -------
