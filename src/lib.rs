@@ -609,6 +609,12 @@ mod test {
     }
 
     #[test]
+    fn test_max_level() {
+        let builder = SimpleLogger::new();
+        assert_eq!(builder.max_level(), LevelFilter::Trace);
+    }
+
+    #[test]
     #[cfg(feature = "timestamps")]
     fn test_timestamps_defaults() {
         let builder = SimpleLogger::new();
