@@ -146,7 +146,7 @@ impl SimpleLogger {
 
     /// Enables the user to choose log level by setting `RUST_LOG=<level>`
     /// environment variable. This will use the default level set by
-    /// [`with_level`] if `RUST_LOG` is not set or can't be parsed as a 
+    /// [`with_level`] if `RUST_LOG` is not set or can't be parsed as a
     /// standard log level.
     ///
     /// This must be called after [`with_level`]. If called before
