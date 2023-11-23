@@ -491,6 +491,9 @@ impl Log for SimpleLogger {
     fn flush(&self) {}
 }
 
+/// Configure the console to display colours.
+///
+/// This is only needed on Windows when using the 'colored' feature.
 #[cfg(all(windows, feature = "colored"))]
 pub fn set_up_color_terminal() {
     use std::io::{stdout, IsTerminal};
@@ -519,6 +522,12 @@ pub fn set_up_color_terminal() {
         }
     }
 }
+
+/// Configure the console to display colours.
+///
+/// This method does nothing if not running on Windows with the colored feature.
+#[cfg(not(all(windows, feature = "colored")))]
+pub fn set_up_color_terminal() { }
 
 /// Initialise the logger with its default configuration.
 ///
