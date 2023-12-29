@@ -215,7 +215,8 @@ impl SimpleLogger {
     #[must_use = "You must call init() to begin logging"]
     pub fn with_module_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
         self.module_levels.push((target.to_string(), level));
-        self.module_levels.sort_by_key(|(name, _level)| name.len().wrapping_neg());
+        self.module_levels
+            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
         self
     }
 
@@ -228,7 +229,8 @@ impl SimpleLogger {
     )]
     pub fn with_target_levels(mut self, target_levels: HashMap<String, LevelFilter>) -> SimpleLogger {
         self.module_levels = target_levels.into_iter().collect();
-        self.module_levels.sort_by_key(|(name, _level)| name.len().wrapping_neg());
+        self.module_levels
+            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
         self
     }
 
