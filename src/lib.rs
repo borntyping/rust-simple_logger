@@ -66,8 +66,9 @@ pub struct SimpleLogger {
     /// The specific logging level for each module
     ///
     /// This is used to override the default value for some specific modules.
-    /// After initialization, the vector is sorted so that the first (prefix) match
-    /// directly gives us the desired log level.
+    ///
+    /// This must be sorted from most-specific to least-specific, so that [`enabled`](#method.enabled) can scan the
+    /// vector for the first match to give us the desired log level for a module.
     module_levels: Vec<(String, LevelFilter)>,
 
     /// Whether to include thread names (and IDs) or not
@@ -209,19 +210,17 @@ impl SimpleLogger {
     ///     .init()
     ///     .unwrap();
     /// ```
+    //
+    // This method *must* sort `module_levels` for the [`enabled`](#method.enabled) method to work correctly.
     #[must_use = "You must call init() to begin logging"]
     pub fn with_module_level(mut self, target: &str, level: LevelFilter) -> SimpleLogger {
         self.module_levels.push((target.to_string(), level));
-
-        /* Normally this is only called in `init` to avoid redundancy, but we can't initialize the logger in tests */
-        #[cfg(test)]
-        self.module_levels
-            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
-
+        self.module_levels.sort_by_key(|(name, _level)| name.len().wrapping_neg());
         self
     }
 
     /// Override the log level for specific targets.
+    // This method *must* sort `module_levels` for the [`enabled`](#method.enabled) method to work correctly.
     #[must_use = "You must call init() to begin logging"]
     #[deprecated(
         since = "1.11.0",
@@ -229,12 +228,7 @@ impl SimpleLogger {
     )]
     pub fn with_target_levels(mut self, target_levels: HashMap<String, LevelFilter>) -> SimpleLogger {
         self.module_levels = target_levels.into_iter().collect();
-
-        /* Normally this is only called in `init` to avoid redundancy, but we can't initialize the logger in tests */
-        #[cfg(test)]
-        self.module_levels
-            .sort_by_key(|(name, _level)| name.len().wrapping_neg());
-
+        self.module_levels.sort_by_key(|(name, _level)| name.len().wrapping_neg());
         self
     }
 
@@ -343,12 +337,6 @@ impl SimpleLogger {
 
     /// Configure the logger
     pub fn max_level(&self) -> LevelFilter {
-        /* Sort all module levels from most specific to least specific. The length of the module
-         * name is used instead of its actual depth to avoid module name parsing.
-         */
-        let mut levels = self.module_levels.clone();
-        levels.sort_by_key(|(name, _level)| name.len().wrapping_neg());
-
         let max_level = self.module_levels.iter().map(|(_name, level)| level).copied().max();
         max_level
             .map(|lvl| lvl.max(self.default_level))
@@ -610,6 +598,20 @@ mod test {
         assert!(logger.enabled(&create_log("chatty_dependency::module", Level::Warn)));
     }
 
+    /// Test that enabled() looks for the most specific target.
+    #[test]
+    fn test_module_levels() {
+        let logger = SimpleLogger::new()
+            .with_level(LevelFilter::Off)
+            .with_module_level("a", LevelFilter::Off)
+            .with_module_level("a::b::c", LevelFilter::Off)
+            .with_module_level("a::b", LevelFilter::Info);
+
+        assert_eq!(logger.enabled(&create_log("a", Level::Info)), false);
+        assert_eq!(logger.enabled(&create_log("a::b", Level::Info)), true);
+        assert_eq!(logger.enabled(&create_log("a::b::c", Level::Info)), false);
+    }
+
     #[test]
     fn test_max_level() {
         let builder = SimpleLogger::new();
@@ -662,6 +664,20 @@ mod test {
 
         builder = builder.with_colors(false);
         assert!(builder.colors == false);
+    }
+
+    /// > And, without sorting, this would lead to all serde_json logs being treated as if they were configured to
+    /// > Error level instead of Trace (since to determine the logging level for target, the code finds first match in
+    /// > module_levels by a string prefix).
+    #[test]
+    fn test_issue_90() {
+        let logger = SimpleLogger::new()
+            .with_level(LevelFilter::Off)
+            .with_module_level("serde", LevelFilter::Error)
+            .with_module_level("serde_json", LevelFilter::Trace);
+
+        assert_eq!(logger.enabled(&create_log("serde", Level::Trace)), false);
+        assert_eq!(logger.enabled(&create_log("serde_json", Level::Trace)), true);
     }
 
     fn create_log(name: &str, level: Level) -> Metadata {
