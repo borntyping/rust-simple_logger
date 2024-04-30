@@ -104,22 +104,13 @@ You might want to wrap this logger to do your own processing before handing even
 of calling `init()` which calls `log::set_max_level` and `log::set_boxed_logger`, you can call those functions directly
 giving you the chance to wrap or adjust the logger. See [wrap.rs](examples/wrap.rs) for a more detailed example.
 
-The call to `set_up_color_terminal()` is currently only needed on Windows when the `colored` feature is enabled. If
-you're not on Windows and not using the `colored` feature, it will do nothing. 
+### Console setup
 
-```rust
-use simple_logger::{SimpleLogger, set_up_color_terminal};
+The `SimpleLogger.init()` function attempts to configure colours support as best it can in various situations:
 
-fn main() {
-    set_up_color_terminal();
-
-    let logger = SimpleLogger::new();
-    let max_level = logger.max_level();
-
-    log::set_max_level(max_level);
-    log::set_boxed_logger(Box::new(logger)).unwrap();
-}
-```
+- On Windows, it will enable colour output. _See `set_up_windows_color_terminal()`._
+- When using the `colors` *and* `stderr` features, it will instruct the `colored` library to display colors if STDERR
+  is a terminal (instead of checking if STDOUT is a terminal). _See `use_stderr_for_colors()`._
 
 Licence
 -------

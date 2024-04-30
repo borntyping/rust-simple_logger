@@ -1,5 +1,5 @@
 use log::{Log, Metadata, Record};
-use simple_logger::{set_up_color_terminal, SimpleLogger};
+use simple_logger::SimpleLogger;
 
 struct WrapperLogger {
     simple_logger: SimpleLogger,
@@ -20,11 +20,11 @@ impl Log for WrapperLogger {
 }
 
 fn main() {
-    set_up_color_terminal();
-
     let simple_logger = SimpleLogger::new();
     log::set_max_level(simple_logger.max_level());
 
     let wrapper_logger = WrapperLogger { simple_logger };
     log::set_boxed_logger(Box::new(wrapper_logger)).unwrap();
+
+    log::warn!("This is an example message.");
 }

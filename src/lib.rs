@@ -348,8 +348,11 @@ impl SimpleLogger {
     /// 'Init' the actual logger and instantiate it,
     /// this method MUST be called in order for the logger to be effective.
     pub fn init(self) -> Result<(), SetLoggerError> {
-        // Setup colors if needed. The implementation if feature dependent.
-        set_up_color_terminal();
+        #[cfg(all(windows, feature = "colored"))]
+        set_up_windows_color_terminal();
+
+        #[cfg(all(feature = "colored", feature = "stderr"))]
+        use_stderr_for_colors();
 
         log::set_max_level(self.max_level());
         log::set_boxed_logger(Box::new(self))
@@ -481,11 +484,12 @@ impl Log for SimpleLogger {
     fn flush(&self) {}
 }
 
-/// Configure the console to display colours - Windows + colored
+/// Configure the console to display colours.
 ///
-/// This is only needed on Windows when using the 'colored' feature.
+/// This is only needed on Windows when using the 'colors' feature.
+/// It doesn't currently handle combining the 'colors' and 'stderr' features.
 #[cfg(all(windows, feature = "colors"))]
-pub fn set_up_color_terminal() {
+pub fn set_up_windows_color_terminal() {
     use std::io::{stdout, IsTerminal};
 
     if stdout().is_terminal() {
@@ -513,31 +517,14 @@ pub fn set_up_color_terminal() {
     }
 }
 
-/// Configure the console to display colours - Windows + !colored
-///
-/// This method does nothing if running on Windows with the colored feature disabled.
-#[cfg(all(windows, not(feature = "colors")))]
-pub fn set_up_color_terminal() {}
+/// The colored crate will disable colors when STDOUT is not a terminal. This method overrides this
+/// behaviour to check the status of STDERR instead.
+#[cfg(all(feature = "colored", feature = "stderr"))]
+fn use_stderr_for_colors() {
+    use std::io::{stderr, IsTerminal};
 
-/// Configure the console to display colours - !Windows + stderr + colors
-///
-/// The colored crate will disable colors when stdout is not a terminal. This method overrides this
-/// behaviour to check the status of stderr instead.
-#[cfg(all(not(windows), feature = "stderr"))]
-pub fn set_up_color_terminal() {
-    #[cfg(feature = "colors")]
-    {
-        use std::io::{stderr, IsTerminal};
-        colored::control::set_override(stderr().is_terminal());
-    }
+    colored::control::set_override(stderr().is_terminal());
 }
-
-/// Configure the console to display colours - !Windows + !stderr
-///
-/// This method does nothing if not running on Windows with the colored feature and outputting on
-/// stdout.
-#[cfg(all(not(windows), not(feature = "stderr")))]
-pub fn set_up_color_terminal() {}
 
 /// Initialise the logger with its default configuration.
 ///

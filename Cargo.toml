@@ -28,6 +28,10 @@ name = "colors"
 required-features = ["colors"]
 
 [[example]]
+name = "stderr"
+required-features = ["colors", "stderr"]
+
+[[example]]
 name = "threads"
 required-features = ["threads"]
 
