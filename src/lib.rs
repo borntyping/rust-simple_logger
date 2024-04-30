@@ -30,7 +30,7 @@
 
 #![cfg_attr(feature = "nightly", feature(thread_id_value))]
 
-#[cfg(feature = "colored")]
+#[cfg(feature = "colors")]
 use colored::*;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::{collections::HashMap, str::FromStr};
@@ -88,7 +88,7 @@ pub struct SimpleLogger {
     /// Whether to use color output or not.
     ///
     /// This field is only available if the `color` feature is enabled.
-    #[cfg(feature = "colored")]
+    #[cfg(feature = "colors")]
     colors: bool,
 }
 
@@ -118,7 +118,7 @@ impl SimpleLogger {
             #[cfg(feature = "timestamps")]
             timestamps_format: None,
 
-            #[cfg(feature = "colored")]
+            #[cfg(feature = "colors")]
             colors: true,
         }
     }
@@ -331,7 +331,7 @@ impl SimpleLogger {
     ///
     /// This method is only available if the `colored` feature is enabled.
     #[must_use = "You must call init() to begin logging"]
-    #[cfg(feature = "colored")]
+    #[cfg(feature = "colors")]
     pub fn with_colors(mut self, colors: bool) -> SimpleLogger {
         self.colors = colors;
         self
@@ -380,7 +380,7 @@ impl Log for SimpleLogger {
     fn log(&self, record: &Record) {
         if self.enabled(record.metadata()) {
             let level_string = {
-                #[cfg(feature = "colored")]
+                #[cfg(feature = "colors")]
                 {
                     if self.colors {
                         match record.level() {
@@ -394,7 +394,7 @@ impl Log for SimpleLogger {
                         format!("{:<5}", record.level().to_string())
                     }
                 }
-                #[cfg(not(feature = "colored"))]
+                #[cfg(not(feature = "colors"))]
                 {
                     format!("{:<5}", record.level().to_string())
                 }
@@ -484,7 +484,7 @@ impl Log for SimpleLogger {
 /// Configure the console to display colours - Windows + colored
 ///
 /// This is only needed on Windows when using the 'colored' feature.
-#[cfg(all(windows, feature = "colored"))]
+#[cfg(all(windows, feature = "colors"))]
 pub fn set_up_color_terminal() {
     use std::io::{stdout, IsTerminal};
 
@@ -516,17 +516,20 @@ pub fn set_up_color_terminal() {
 /// Configure the console to display colours - Windows + !colored
 ///
 /// This method does nothing if running on Windows with the colored feature disabled.
-#[cfg(all(windows, not(feature = "colored")))]
+#[cfg(all(windows, not(feature = "colors")))]
 pub fn set_up_color_terminal() {}
 
 /// Configure the console to display colours - !Windows + stderr + colors
 ///
 /// The colored crate will disable colors when stdout is not a terminal. This method overrides this
 /// behaviour to check the status of stderr instead.
-#[cfg(all(not(windows), feature = "stderr", feature = "colored"))]
+#[cfg(all(not(windows), feature = "stderr"))]
 pub fn set_up_color_terminal() {
-    use std::io::{stderr, IsTerminal};
-    colored::control::set_override(stderr().is_terminal());
+    #[cfg(feature = "colors")]
+    {
+        use std::io::{stderr, IsTerminal};
+        colored::control::set_override(stderr().is_terminal());
+    }
 }
 
 /// Configure the console to display colours - !Windows + !stderr
