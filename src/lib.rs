@@ -150,18 +150,48 @@ impl SimpleLogger {
     /// [`with_level`] if `RUST_LOG` is not set or can't be parsed as a
     /// standard log level.
     ///
+    /// module/target level filtering is supported
+    ///
+    /// the following format is expected:
+    /// ```text
+    /// RUST_LOG=[default-level][,][target][=][level][,...]
+    /// ```
+    /// example:
+    /// ```text
+    /// RUST_LOG=warn,data=debug,hardware=debug
+    /// ```
+    ///
     /// This must be called after [`with_level`]. If called before
     /// [`with_level`], it will have no effect.
     ///
     /// [`with_level`]: #method.with_level
     #[must_use = "You must call init() to begin logging"]
     pub fn env(mut self) -> SimpleLogger {
-        self.default_level = std::env::var("RUST_LOG")
-            .ok()
-            .as_deref()
-            .map(log::LevelFilter::from_str)
-            .and_then(Result::ok)
-            .unwrap_or(self.default_level);
+        if let Ok(modules) = std::env::var("RUST_LOG").as_deref() {
+            let mut iter = modules.split(',');
+
+            if let Some((module, level)) = iter
+                .next()
+                .map(|pair| match log::LevelFilter::from_str(pair) {
+                    Ok(level) => {
+                        self.default_level = level;
+                        None
+                    }
+                    Err(_) => Some(pair),
+                })
+                .and_then(|x| x)
+                .map(|pair| pair.split_once('='))
+                .and_then(|x| x)
+            {
+                let level = log::LevelFilter::from_str(level).unwrap_or(self.default_level);
+                self.module_levels.push((module.to_string(), level));
+            }
+
+            for (module, level) in iter.flat_map(|x| x.split_once('=')) {
+                let level = log::LevelFilter::from_str(level).unwrap_or(self.default_level);
+                self.module_levels.push((module.to_string(), level));
+            }
+        }
 
         self
     }
