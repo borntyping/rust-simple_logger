@@ -471,7 +471,17 @@ impl Log for SimpleLogger {
                 ""
             };
 
-            let message = format!("{}{} [{}{}] {}", timestamp, level_string, target, thread, record.args());
+            let file_name = match record.file() {
+                Some(s) => s.to_string(),
+                None => String::from("unknown"),
+            };
+
+            let line_number = match record.line() {
+                Some(s) => s.to_string(),
+                None => String::from("unknown"),
+            };
+
+            let message = format!("{timestamp}{level_string} [{target}{thread} {file_name}:{line_number}] {}", record.args());
 
             #[cfg(not(feature = "stderr"))]
             println!("{}", message);
