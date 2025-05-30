@@ -19,7 +19,7 @@ stderr = []
 [dependencies]
 log = { version = "^0.4.17", features = ["std"] }
 time = { version = "^0.3.16", features = ["formatting", "local-offset", "macros"], optional = true }
-colored = { version = "2", optional = true }
+colored = { version = "3", optional = true }
 
 [target.'cfg(windows)'.dependencies]
 windows-sys = { version = "^0.48.0", features = ["Win32_System_Console", "Win32_Foundation"] }

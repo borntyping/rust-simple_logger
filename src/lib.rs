@@ -32,6 +32,7 @@
 
 #[cfg(feature = "colors")]
 use colored::*;
+use core::fmt;
 use log::{Level, LevelFilter, Log, Metadata, Record, SetLoggerError};
 use std::{collections::HashMap, str::FromStr};
 #[cfg(feature = "timestamps")]
@@ -401,85 +402,86 @@ impl Log for SimpleLogger {
     }
 
     fn log(&self, record: &Record) {
-        if self.enabled(record.metadata()) {
-            let level_string = {
-                #[cfg(feature = "colors")]
-                {
-                    if self.colors {
-                        match record.level() {
-                            Level::Error => format!("{:<5}", record.level().to_string()).red().to_string(),
-                            Level::Warn => format!("{:<5}", record.level().to_string()).yellow().to_string(),
-                            Level::Info => format!("{:<5}", record.level().to_string()).cyan().to_string(),
-                            Level::Debug => format!("{:<5}", record.level().to_string()).purple().to_string(),
-                            Level::Trace => format!("{:<5}", record.level().to_string()).normal().to_string(),
-                        }
-                    } else {
-                        format!("{:<5}", record.level().to_string())
+        #[expect(dead_code)]
+        struct DisplayNone;
+        impl fmt::Display for DisplayNone {
+            fn fmt(&self, _: &mut fmt::Formatter<'_>) -> fmt::Result {
+                Ok(())
+            }
+        }
+        #[cfg(feature = "colors")]
+        struct DisplayLevel<'a>(bool, &'a Record<'a>);
+        #[cfg(feature = "colors")]
+        impl fmt::Display for DisplayLevel<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if self.0 {
+                    let s = self.1.level().to_string();
+                    match self.1.level() {
+                        Level::Error => write!(f, "{:<5}", s.red()),
+                        Level::Warn => write!(f, "{:<5}", s.yellow()),
+                        Level::Info => write!(f, "{:<5}", s.cyan()),
+                        Level::Debug => write!(f, "{:<5}", s.purple()),
+                        Level::Trace => write!(f, "{:<5}", s.normal()),
                     }
-                }
-                #[cfg(not(feature = "colors"))]
-                {
-                    format!("{:<5}", record.level().to_string())
-                }
-            };
-
-            let target = if !record.target().is_empty() {
-                record.target()
-            } else {
-                record.module_path().unwrap_or_default()
-            };
-
-            let source_location = {
-                #[cfg(feature = "source_location")]
-                if self.source_location {
-                    format!(
-                        "{}:{} ",
-                        match record.file() {
-                            Some(s) => s,
-                            None => "unknown",
-                        },
-                        match record.line() {
-                            Some(s) => s.to_string(),
-                            None => String::from("unknown"),
-                        }
-                    )
                 } else {
-                    "".to_string()
+                    write!(f, "{:<5}", self.1.level())
                 }
-
-                #[cfg(not(feature = "source_location"))]
-                ""
-            };
-
-            let thread = {
-                #[cfg(feature = "threads")]
-                if self.threads {
+            }
+        }
+        #[cfg(feature = "threads")]
+        struct DisplayThreats(bool);
+        #[cfg(feature = "threads")]
+        impl fmt::Display for DisplayThreats {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                if self.0 {
                     let thread = std::thread::current();
-
-                    format!("@{}", {
+                    write!(f, "@{}", {
                         #[cfg(feature = "nightly")]
                         {
                             thread.name().unwrap_or(&thread.id().as_u64().to_string())
                         }
-
                         #[cfg(not(feature = "nightly"))]
                         {
                             thread.name().unwrap_or("?")
                         }
                     })
                 } else {
-                    "".to_string()
+                    Ok(())
                 }
-
-                #[cfg(not(feature = "threads"))]
-                ""
-            };
-
-            let timestamp = {
-                #[cfg(feature = "timestamps")]
-                match self.timestamps {
-                    Timestamps::None => "".to_string(),
-                    Timestamps::Local => format!(
+            }
+        }
+        #[cfg(feature = "source_location")]
+        struct DisplaySourceLocation<'a>(bool, &'a Record<'a>);
+        #[cfg(feature = "source_location")]
+        impl fmt::Display for DisplaySourceLocation<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+                if self.0 {
+                    write!(
+                        f,
+                        "{}:{} ",
+                        match self.1.file() {
+                            Some(s) => s,
+                            None => "unknown",
+                        },
+                        match self.1.line() {
+                            Some(s) => s.to_string(),
+                            None => String::from("unknown"),
+                        }
+                    )
+                } else {
+                    Ok(())
+                }
+            }
+        }
+        #[cfg(feature = "timestamps")]
+        struct DisplayTimestamps<'a>(&'a SimpleLogger);
+        #[cfg(feature = "timestamps")]
+        impl fmt::Display for DisplayTimestamps<'_> {
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+                match self.0.timestamps {
+                    Timestamps::None => Ok(()),
+                    Timestamps::Local => write!(
+                        f,
                         "{} ",
                         OffsetDateTime::now_local()
                             .expect(concat!(
@@ -491,29 +493,80 @@ impl Log for SimpleLogger {
                                 "behaviour. See the time crate's documentation for more information. ",
                                 "(https://time-rs.github.io/internal-api/time/index.html#feature-flags)"
                             ))
-                            .format(&self.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
+                            .format(&self.0.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
                             .unwrap()
                     ),
-                    Timestamps::Utc => format!(
+                    Timestamps::Utc => write!(
+                        f,
                         "{} ",
                         OffsetDateTime::now_utc()
-                            .format(&self.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_UTC))
+                            .format(&self.0.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_UTC))
                             .unwrap()
                     ),
-                    Timestamps::UtcOffset(offset) => format!(
+                    Timestamps::UtcOffset(offset) => write!(
+                        f,
                         "{} ",
                         OffsetDateTime::now_utc()
                             .to_offset(offset)
-                            .format(&self.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
+                            .format(&self.0.timestamps_format.unwrap_or(TIMESTAMP_FORMAT_OFFSET))
                             .unwrap()
                     ),
                 }
-
-                #[cfg(not(feature = "timestamps"))]
-                ""
+            }
+        }
+        if self.enabled(record.metadata()) {
+            let level_string = {
+                #[cfg(feature = "colors")]
+                {
+                    DisplayLevel(self.colors, record)
+                }
+                #[cfg(not(feature = "colors"))]
+                {
+                    DisplayNone
+                }
             };
 
-            let message = format!(
+            let target = if !record.target().is_empty() {
+                record.target()
+            } else {
+                record.module_path().unwrap_or_default()
+            };
+
+            let source_location = {
+                #[cfg(feature = "source_location")]
+                {
+                    DisplaySourceLocation(self.source_location, record)
+                }
+                #[cfg(not(feature = "source_location"))]
+                {
+                    DisplayNone
+                }
+            };
+
+            let thread = {
+                #[cfg(feature = "threads")]
+                {
+                    DisplayThreats(self.threads)
+                }
+                #[cfg(not(feature = "threads"))]
+                {
+                    DisplayNone
+                }
+            };
+
+            let timestamp = {
+                #[cfg(feature = "timestamps")]
+                {
+                    DisplayTimestamps(self)
+                }
+                #[cfg(not(feature = "timestamps"))]
+                {
+                    DisplayNone
+                }
+            };
+
+            #[cfg(not(feature = "stderr"))]
+            println!(
                 "{}{} [{}{}{}] {}",
                 timestamp,
                 level_string,
@@ -523,11 +576,16 @@ impl Log for SimpleLogger {
                 record.args()
             );
 
-            #[cfg(not(feature = "stderr"))]
-            println!("{}", message);
-
             #[cfg(feature = "stderr")]
-            eprintln!("{}", message);
+            eprintln!(
+                "{}{} [{}{}{}] {}",
+                timestamp,
+                level_string,
+                source_location,
+                target,
+                thread,
+                record.args()
+            );
         }
     }
 
