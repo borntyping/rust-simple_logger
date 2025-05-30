@@ -11,6 +11,7 @@ edition = "2018"
 default = ["colors", "timestamps"]
 colors = ["colored"]
 threads = []
+source_location = []
 timestamps = ["time"]
 nightly = []
 stderr = []
@@ -34,6 +35,10 @@ required-features = ["colors", "stderr"]
 [[example]]
 name = "threads"
 required-features = ["threads"]
+
+[[example]]
+name = "source_location"
+required-features = ["source_location"]
 
 [[example]]
 name = "timestamps_local"

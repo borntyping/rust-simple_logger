@@ -77,6 +77,12 @@ pub struct SimpleLogger {
     #[cfg(feature = "threads")]
     threads: bool,
 
+    /// Whether to include filename and line number or not
+    ///
+    /// This field is only available if the `source_location` feature is enabled.
+    #[cfg(feature = "source_location")]
+    source_location: bool,
+
     /// Control how timestamps are displayed.
     ///
     /// This field is only available if the `timestamps` feature is enabled.
@@ -111,6 +117,9 @@ impl SimpleLogger {
 
             #[cfg(feature = "threads")]
             threads: false,
+
+            #[cfg(feature = "source_location")]
+            source_location: false,
 
             #[cfg(feature = "timestamps")]
             timestamps: Timestamps::Utc,
@@ -242,6 +251,17 @@ impl SimpleLogger {
     #[cfg(feature = "threads")]
     pub fn with_threads(mut self, threads: bool) -> SimpleLogger {
         self.threads = threads;
+        self
+    }
+
+    /// Control whether filename and line number are printed or not.
+    ///
+    /// This method is only available if the `source_location` feature is enabled.
+    /// Code locations are disabled by default.
+    #[must_use = "You must call init() to begin logging"]
+    #[cfg(feature = "source_location")]
+    pub fn with_source_location(mut self, source_location: bool) -> SimpleLogger {
+        self.source_location = source_location;
         self
     }
 
@@ -409,6 +429,28 @@ impl Log for SimpleLogger {
                 record.module_path().unwrap_or_default()
             };
 
+            let source_location = {
+                #[cfg(feature = "source_location")]
+                if self.source_location {
+                    format!(
+                        "{}:{} ",
+                        match record.file() {
+                            Some(s) => s,
+                            None => "unknown",
+                        },
+                        match record.line() {
+                            Some(s) => s.to_string(),
+                            None => String::from("unknown"),
+                        }
+                    )
+                } else {
+                    "".to_string()
+                }
+
+                #[cfg(not(feature = "source_location"))]
+                ""
+            };
+
             let thread = {
                 #[cfg(feature = "threads")]
                 if self.threads {
@@ -471,7 +513,15 @@ impl Log for SimpleLogger {
                 ""
             };
 
-            let message = format!("{}{} [{}{}] {}", timestamp, level_string, target, thread, record.args());
+            let message = format!(
+                "{}{} [{}{}{}] {}",
+                timestamp,
+                level_string,
+                source_location,
+                target,
+                thread,
+                record.args()
+            );
 
             #[cfg(not(feature = "stderr"))]
             println!("{}", message);
