@@ -17,7 +17,7 @@ stderr = []
 
 [dependencies]
 log = { version = "^0.4.28", features = ["std"] }
-time = { version = "^0.3.44", features = ["formatting", "local-offset", "macros"], optional = true }
+time = { version = "^0.3.47", features = ["formatting", "local-offset", "macros"], optional = true }
 colored = { version = "^3.0.0", optional = true }
 
 [target.'cfg(windows)'.dependencies]
